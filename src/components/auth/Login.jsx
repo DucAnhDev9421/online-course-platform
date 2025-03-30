@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FaFacebook, FaGoogle, FaEnvelope } from 'react-icons/fa';
 
+
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,7 +24,7 @@ export default function Login() {
   return (
     <div className="max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden p-8">
       <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Đăng nhập tài khoản</h2>
-      
+
       {/* Form đăng nhập bằng email */}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -40,7 +41,7 @@ export default function Login() {
             placeholder="Nhập email của bạn"
           />
         </div>
-        
+
         <div>
           <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
             Mật khẩu
@@ -56,7 +57,7 @@ export default function Login() {
             placeholder="Nhập mật khẩu"
           />
         </div>
-        
+
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <input
@@ -70,12 +71,12 @@ export default function Login() {
               Ghi nhớ đăng nhập
             </label>
           </div>
-          
+
           <a href="#" className="text-sm text-purple-600 hover:text-purple-500">
             Quên mật khẩu?
           </a>
         </div>
-        
+
         <button
           type="submit"
           disabled={isLoading}
@@ -84,7 +85,7 @@ export default function Login() {
           {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
         </button>
       </form>
-      
+
       {/* Phương thức đăng nhập khác */}
       <div className="mt-6">
         <div className="relative">
@@ -97,7 +98,7 @@ export default function Login() {
             </span>
           </div>
         </div>
-        
+
         <div className="mt-6 grid grid-cols-2 gap-3">
           {/* Facebook */}
           <button
@@ -107,7 +108,7 @@ export default function Login() {
             <FaFacebook className="h-5 w-5 text-blue-600 mr-2" />
             Facebook
           </button>
-          
+
           {/* Google */}
           <button
             onClick={() => handleSocialLogin('google')}
@@ -118,14 +119,14 @@ export default function Login() {
           </button>
         </div>
       </div>
-      
+
       {/* Liên kết chuyển sang đăng ký */}
       <div className="mt-6 text-center">
         <p className="text-sm text-gray-600">
           Chưa có tài khoản?{' '}
-          <button 
-             onClick={onSwitchToRegister}
-             className="text-sm text-purple-600 hover:text-purple-500 font-medium"
+          <button
+            onClick={onSwitchToRegister}
+            className="text-sm text-purple-600 hover:text-purple-500 font-medium"
           >
             Chưa có tài khoản? Đăng ký ngay
           </button>

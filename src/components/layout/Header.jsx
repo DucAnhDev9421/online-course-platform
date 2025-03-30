@@ -1,13 +1,16 @@
 // components/Header.jsx
 import { useState } from 'react';
 import ProfilePage from '../../pages/ProfilePage';
+import { useLocation } from "react-router-dom";
+
+import { Link } from "react-router-dom";
+
 
 export default function Header() {
+  const location = useLocation();
   const [showCategories, setShowCategories] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
-
-
+  const isLoggedIn = location.pathname !== "/Register";
   // Thêm dữ liệu user
   const userData = {
     name: "User",
@@ -35,11 +38,14 @@ export default function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm">
+    <header className="bg-white shadow-lg">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-8">
           {/* Logo Udemy */}
-          <a href="#" className="text-2xl font-bold text-purple-700">Udemy</a>
+          <Link to="/" className="text-2xl font-bold text-purple-700">
+            Udemy
+          </Link>
+
 
           {/* Nút Danh mục  */}
           <div
@@ -116,7 +122,7 @@ export default function Header() {
         <div className="flex items-center space-x-4">
           <nav className="hidden md:flex space-x-6">
             <a href="#" className="font-medium hover:text-purple-700">Udemy Business</a>
-            <a href="#" className="font-medium hover:text-purple-700">Giảng dạy</a>
+            <a href="#" className="font-medium hover:text-purple-700">Giảng dạy trên Udemy</a>
           </nav>
 
           {/* Nút giỏ hàng */}

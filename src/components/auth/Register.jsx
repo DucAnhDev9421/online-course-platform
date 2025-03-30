@@ -21,7 +21,7 @@ export default function Register() {
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden p-8">
+    <div className="max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden p-8 mt-20">
       <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Đăng ký tài khoản</h2>
       
       {/* Form đăng ký bằng email */}

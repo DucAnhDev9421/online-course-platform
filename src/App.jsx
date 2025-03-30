@@ -1,11 +1,11 @@
-// App.jsx
-import { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/layout/Header';
 import HeroSection from './components/HeroSection';
 import Categories from './components/Categories';
 import CourseCard from './components/courses/CourseCard';
 import Footer from './components/layout/Footer';
-
+import Login from './components/auth/Login';
+import Register from './components/auth/Register';
 
 const courses = [
   {
@@ -24,31 +24,37 @@ const courses = [
     students: '150,000',
     image: 'https://img-c.udemycdn.com/course/480x270/851712_fc61_6.jpg'
   },
-  // Thêm các khóa học khác 
 ];
 
 export default function App() {
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Truyền hàm setAuthModal vào Header */}
-      <Header onAuthButtonClick={(type) => setAuthModal({ show: true, type })} />
-      
-      <main className="flex-grow">
-        <HeroSection />
-        <section className="py-12 bg-white">
-          <div className="container mx-auto px-4">
-            <h2 className="text-2xl font-bold mb-8">Các khóa học được đề xuất</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {courses.map((course, index) => (
-                <CourseCard key={index} {...course} />
-              ))}
-            </div>
-          </div>
-        </section>
-        <Categories />
-      </main>
-      
-      <Footer />
-    </div>
-  )
+    <Router>
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-grow">
+          <Routes>
+            <Route path="/" element={
+              <>
+                <HeroSection />
+                <section className="py-12 bg-white">
+                  <div className="container mx-auto px-4">
+                    <h2 className="text-2xl font-bold mb-8">Các khóa học được đề xuất</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {courses.map((course, index) => (
+                        <CourseCard key={index} {...course} />
+                      ))}
+                    </div>
+                  </div>
+                </section>
+                <Categories />
+              </>
+            } />
+            <Route path="/login" element={<Login/>} />
+            <Route path="/register" element={<Register/>} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </Router>
+  );
 }
