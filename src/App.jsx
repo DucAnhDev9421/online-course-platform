@@ -1,10 +1,10 @@
 // App.jsx
 import { useState } from 'react';
-import Header from './components/Header';
+import Header from './components/layout/Header';
 import HeroSection from './components/HeroSection';
 import Categories from './components/Categories';
-import CourseCard from './components/CourseCard';
-import Footer from './components/Footer';
+import CourseCard from './components/courses/CourseCard';
+import Footer from './components/layout/Footer';
 
 
 const courses = [
@@ -24,15 +24,10 @@ const courses = [
     students: '150,000',
     image: 'https://img-c.udemycdn.com/course/480x270/851712_fc61_6.jpg'
   },
-  // Thêm các khóa học khác
+  // Thêm các khóa học khác 
 ];
 
 export default function App() {
-  const [authModal, setAuthModal] = useState({
-    show: false,
-    type: 'login' // 'login' hoặc 'register'
-  });
-
   return (
     <div className="min-h-screen flex flex-col">
       {/* Truyền hàm setAuthModal vào Header */}
@@ -54,9 +49,6 @@ export default function App() {
       </main>
       
       <Footer />
-
-    
-
     </div>
   )
 }

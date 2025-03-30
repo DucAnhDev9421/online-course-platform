@@ -1,8 +1,18 @@
 // components/Header.jsx
 import { useState } from 'react';
+import ProfilePage from '../../pages/ProfilePage';
 
 export default function Header() {
   const [showCategories, setShowCategories] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
+
+
+  // Thêm dữ liệu user
+  const userData = {
+    name: "User",
+    email: "user@example.com"
+  };
 
   // Danh sách categories và subcategories
   const categories = [
@@ -30,51 +40,51 @@ export default function Header() {
         <div className="flex items-center space-x-8">
           {/* Logo Udemy */}
           <a href="#" className="text-2xl font-bold text-purple-700">Udemy</a>
-          
+
           {/* Nút Danh mục  */}
-          <div 
+          <div
             className="relative hidden md:block"
             onMouseEnter={() => setShowCategories(true)}
             onMouseLeave={() => setShowCategories(false)}
           >
             <button className="font-medium hover:text-purple-700 flex items-center">
               Danh mục
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                className="h-5 w-5 ml-1" 
-                viewBox="0 0 20 20" 
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 ml-1"
+                viewBox="0 0 20 20"
                 fill="currentColor"
               >
                 <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
             </button>
-            
+
             {/* Dropdown menu */}
             {showCategories && (
               <div className="absolute left-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
                 {categories.map((category, index) => (
                   <div key={index} className="group relative">
-                    <a 
-                      href="#" 
+                    <a
+                      href="#"
                       className="block px-4 py-2 text-gray-800 hover:bg-gray-100 flex justify-between items-center"
                     >
                       {category.name}
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        className="h-4 w-4 text-gray-500" 
-                        viewBox="0 0 20 20" 
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 text-gray-500"
+                        viewBox="0 0 20 20"
                         fill="currentColor"
                       >
                         <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                       </svg>
                     </a>
-                    
+
                     {/* Submenu */}
                     <div className="absolute left-full top-0 ml-1 hidden group-hover:block w-64 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
                       {category.subcategories.map((sub, i) => (
-                        <a 
-                          key={i} 
-                          href="#" 
+                        <a
+                          key={i}
+                          href="#"
                           className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
                         >
                           {sub}
@@ -90,9 +100,9 @@ export default function Header() {
 
         {/* Thanh tìm kiếm  */}
         <div className="hidden md:block relative flex-grow max-w-2xl mx-8">
-          <input 
-            type="text" 
-            placeholder="Tìm kiếm khóa học" 
+          <input
+            type="text"
+            placeholder="Tìm kiếm khóa học"
             className="w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
           <button className="absolute right-0 top-0 h-full px-4 bg-purple-700 text-white rounded-r-full hover:bg-purple-800">
@@ -101,26 +111,66 @@ export default function Header() {
             </svg>
           </button>
         </div>
-        
+
         {/* Phần menu bên phải */}
         <div className="flex items-center space-x-4">
           <nav className="hidden md:flex space-x-6">
             <a href="#" className="font-medium hover:text-purple-700">Udemy Business</a>
             <a href="#" className="font-medium hover:text-purple-700">Giảng dạy</a>
           </nav>
-  
-    
 
-          <div className="flex items-center space-x-4">
-            <button className="hidden md:block px-4 py-2 border border-gray-300 rounded-full hover:bg-gray-100">
-              Đăng nhập
-            </button>
-            <button className="px-4 py-2 bg-purple-700 text-white rounded-full hover:bg-purple-800">
-              Đăng ký
-            </button>
-          </div>
+          {/* Nút giỏ hàng */}
+          <button className="p-2 text-gray-700 hover:text-purple-700 relative">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            {/* Số lượng sản phẩm trong giỏ hàng (tùy chọn) */}
+            <span className="absolute -top-1 -right-1 bg-purple-700 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+              0
+            </span>
+          </button>
+
+
+          {isLoggedIn ? (
+            /* Giao diện khi đã đăng nhập */
+            <div className="relative">
+              <button
+                className="flex items-center space-x-1 focus:outline-none"
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+              >
+                <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white font-medium">
+                  {userData.name.charAt(0)}
+                </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={`h-4 w-4 text-gray-600 transition-transform ${showProfileMenu ? 'transform rotate-180' : ''}`}
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+
+              {/* Sử dụng component ProfilePage */}
+              {showProfileMenu && (
+                <ProfilePage
+                  userData={userData}
+                  onClose={() => setShowProfileMenu(false)}
+                />
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center space-x-4">
+              <button className="hidden md:block px-4 py-2 border border-gray-300 rounded-full hover:bg-gray-100">
+                Đăng nhập
+              </button>
+              <button className="px-4 py-2 bg-purple-700 text-white rounded-full hover:bg-purple-800">
+                Đăng ký
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
-  )
+  );
 }

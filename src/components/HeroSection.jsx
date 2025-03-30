@@ -2,7 +2,7 @@
 export default function HeroSection() {
     return (
       <section className="relative py-24 bg-gray-900 text-white">
-        {/* Background image với overlay */}
+        {/* Background image */}
         <div className="absolute inset-0 bg-[url('https://img-c.udemycdn.com/notices/web_carousel_slide/image/db24b94e-d190-4d5a-b1dd-958f702cc8f5.jpg')] bg-cover bg-center opacity-50"></div>
         
         {/* Nội dung */}
