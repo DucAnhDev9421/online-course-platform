@@ -1,4 +1,5 @@
 //ProfilePage.jsx
+// eslint-disable-next-line no-unused-vars
 export default function ProfilePage({ userData, onClose }) {
     return (
       <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">

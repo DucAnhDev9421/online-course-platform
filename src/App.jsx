@@ -6,6 +6,7 @@ import CourseCard from './components/courses/CourseCard';
 import Footer from './components/layout/Footer';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
+import ProfileUser from './pages/ProfileUser';
 
 const courses = [
   {
@@ -51,6 +52,8 @@ export default function App() {
             } />
             <Route path="/login" element={<Login/>} />
             <Route path="/register" element={<Register/>} />
+            {/* Thêm route cho ProfileUser */}
+            <Route path="/profileuser" element={<ProfileUser/>} />
           </Routes>
         </main>
         <Footer />
