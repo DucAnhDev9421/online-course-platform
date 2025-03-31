@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FaFacebook, FaGoogle, FaEnvelope } from 'react-icons/fa';
 
-export default function Register() {
+export default function Register({ onSwitchToLogin }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,7 +16,7 @@ export default function Register() {
   };
 
   const handleSocialRegister = (provider) => {
-    console.log(`Register with ${provider}`);
+    console.log(`Register with ${provider}`); 
     // Xử lý đăng ký mạng xã hội
   };
 
@@ -127,13 +127,16 @@ export default function Register() {
         </div>
       </div>
       
-      {/* Liên kết chuyển sang đăng nhập */}
+      {/* Phần chuyển sang đăng nhập */}
       <div className="mt-6 text-center">
         <p className="text-sm text-gray-600">
           Đã có tài khoản?{' '}
-          <a href="/login" className="font-medium text-purple-600 hover:text-purple-500">
+          <button
+            onClick={onSwitchToLogin}
+            className="text-purple-600 hover:text-purple-500 font-medium focus:outline-none"
+          >
             Đăng nhập
-          </a>
+          </button>
         </p>
       </div>
     </div>

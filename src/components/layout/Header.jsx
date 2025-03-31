@@ -1,4 +1,3 @@
-// components/Header.jsx
 import { useState } from 'react';
 import ProfilePage from '../../pages/ProfilePage';
 import { useLocation } from "react-router-dom";
@@ -10,8 +9,8 @@ export default function Header() {
   const location = useLocation();
   const [showCategories, setShowCategories] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const isLoggedIn = location.pathname !== "/Register";
-  // Thêm dữ liệu user
+  const isLoggedIn = location.pathname !== "/register";
+  // Thêm dữ liệu user demo 
   const userData = {
     name: "User",
     email: "user@example.com"
@@ -54,7 +53,7 @@ export default function Header() {
             onMouseLeave={() => setShowCategories(false)}
           >
             <button className="font-medium hover:text-purple-700 flex items-center">
-              Danh mục
+              Khám Phá
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 ml-1"

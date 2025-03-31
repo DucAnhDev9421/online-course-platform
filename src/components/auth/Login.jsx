@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { FaFacebook, FaGoogle, FaEnvelope } from 'react-icons/fa';
 
 
-export default function Login() {
+export default function Login({ onSwitchToRegister }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -120,15 +120,15 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Liên kết chuyển sang đăng ký */}
-      <div className="mt-6 text-center">
+       {/* Phần chuyển sang đăng ký */}
+       <div className="mt-6 text-center">
         <p className="text-sm text-gray-600">
           Chưa có tài khoản?{' '}
           <button
             onClick={onSwitchToRegister}
-            className="text-sm text-purple-600 hover:text-purple-500 font-medium"
+            className="text-purple-600 hover:text-purple-500 font-medium focus:outline-none"
           >
-            Chưa có tài khoản? Đăng ký ngay
+            Đăng ký ngay
           </button>
         </p>
       </div>
