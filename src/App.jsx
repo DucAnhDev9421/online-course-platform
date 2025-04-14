@@ -1,62 +1,43 @@
-// App.jsx
-import { useState } from 'react';
-import Header from './components/Header';
-import HeroSection from './components/HeroSection';
-import Categories from './components/Categories';
-import CourseCard from './components/CourseCard';
-import Footer from './components/Footer';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import Header from './components/layout/Header';
+import Footer from './components/layout/Footer';
+import HomePage from './pages/HomePage';
+import AuthPage from './pages/AuthPage';
+import ProfileUser from './pages/ProfileUser';
+import CourseList from './pages/CourseList';
+import CourseDetail from './pages/CourseDetail';
+import VideoPlayerPage from './pages/VideoPlayerPage';
 
 
-const courses = [
-  {
-    title: 'React - The Complete Guide (incl Hooks, React Router, Redux)',
-    instructor: 'Maximilian Schwarzmüller',
-    price: 12.99,
-    rating: 4.7,
-    students: '125,000',
-    image: 'https://img-c.udemycdn.com/course/480x270/1362070_b9a1_2.jpg'
-  },
-  {
-    title: 'The Complete JavaScript Course 2023: From Zero to Expert!',
-    instructor: 'Jonas Schmedtmann',
-    price: 13.99,
-    rating: 4.8,
-    students: '150,000',
-    image: 'https://img-c.udemycdn.com/course/480x270/851712_fc61_6.jpg'
-  },
-  // Thêm các khóa học khác
-];
-
-export default function App() {
-  const [authModal, setAuthModal] = useState({
-    show: false,
-    type: 'login' // 'login' hoặc 'register'
-  });
+// Tạo một component layout riêng biệt
+function AppLayout() {
+  const location = useLocation();
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isVideoPlayerPage = location.pathname.includes('/courses/') && location.pathname.includes('/lessons/');
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Truyền hàm setAuthModal vào Header */}
-      <Header onAuthButtonClick={(type) => setAuthModal({ show: true, type })} />
-      
+      {!isAuthPage && !isVideoPlayerPage && <Header />}
       <main className="flex-grow">
-        <HeroSection />
-        <section className="py-12 bg-white">
-          <div className="container mx-auto px-4">
-            <h2 className="text-2xl font-bold mb-8">Các khóa học được đề xuất</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {courses.map((course, index) => (
-                <CourseCard key={index} {...course} />
-              ))}
-            </div>
-          </div>
-        </section>
-        <Categories />
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<AuthPage />} />
+          <Route path="/register" element={<AuthPage />} />
+          <Route path="/profileuser" element={<ProfileUser />} />
+          <Route path="/courses" element={<CourseList />} />
+          <Route path="/courses/:courseId" element={<CourseDetail />} />
+          <Route path="/courses/:courseId/lessons/:lessonId" element={<VideoPlayerPage />} />
+        </Routes>
       </main>
-      
-      <Footer />
-
-    
-
+      {!isAuthPage && !isVideoPlayerPage && <Footer />}
     </div>
-  )
+  );
+}
+
+export default function App() {
+  return (
+    <Router>
+      <AppLayout />
+    </Router>
+  );
 }
