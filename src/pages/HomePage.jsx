@@ -25,17 +25,24 @@ const courses = [
 const HomePage = () => {
   return (
     <>
+      {/* Hero Section */}
       <HeroSection />
+
+      {/* Recommended Courses Section */}
       <section className="py-12 bg-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold mb-8">Các khóa học được đề xuất</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <h2 className="text-2xl font-bold mb-8 text-center sm:text-left">
+            Các khóa học được đề xuất
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {courses.map((course, index) => (
               <CourseCard key={index} {...course} />
             ))}
           </div>
         </div>
       </section>
+
+      {/* Categories Section */}
       <Categories />
     </>
   );
