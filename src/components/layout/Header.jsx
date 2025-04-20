@@ -1,19 +1,15 @@
 // components/Header.jsx
 import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { useUser, useClerk } from '@clerk/clerk-react';
 import ProfilePage from '../../pages/ProfilePage';
-import { useLocation, Link } from 'react-router-dom';
 
 export default function Header() {
   const location = useLocation();
   const [showCategories, setShowCategories] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  // Thêm dữ liệu user demo
-  const userData = {
-    name: "User",
-    email: "user@example.com"
-  };
+  const { user, isSignedIn } = useUser();
+  const { signOut } = useClerk();
 
   // Danh sách categories và subcategories
   const categories = [
@@ -43,12 +39,16 @@ export default function Header() {
     }
   };
 
-
   // Thêm sự kiện click bên ngoài
   useState(() => {
     document.addEventListener('click', handleOutsideClick);
     return () => document.removeEventListener('click', handleOutsideClick);
   }, []);
+
+  const handleSignOut = () => {
+    signOut();
+    setShowProfileMenu(false);
+  };
 
   return (
     <header className="bg-white shadow-lg">
@@ -159,14 +159,14 @@ export default function Header() {
 
         {/* Phần menu bên phải */}
         <div className="flex items-center space-x-4">
-          {isLoggedIn ? (
+          {isSignedIn ? (
             <>
               <nav className="hidden md:flex space-x-6">
                 <a href="#" className="font-medium hover:text-purple-700">
-                  Udemy Business
+                  Khóa Học Của Tôi
                 </a>
                 <a href="#" className="font-medium hover:text-purple-700">
-                  Giảng dạy trên Udemy
+                  Giảng dạy
                 </a>
               </nav>
 
@@ -197,12 +197,11 @@ export default function Header() {
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
                 >
                   <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white font-medium">
-                    {userData.name.charAt(0)}
+                    {user?.firstName?.charAt(0) || user?.username?.charAt(0) || 'U'}
                   </div>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className={`h-4 w-4 text-gray-600 transition-transform ${showProfileMenu ? 'transform rotate-180' : ''
-                      }`}
+                    className={`h-4 w-4 text-gray-600 transition-transform ${showProfileMenu ? 'transform rotate-180' : ''}`}
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >
@@ -215,10 +214,21 @@ export default function Header() {
                 </button>
 
                 {showProfileMenu && (
-                  <ProfilePage
-                    userData={userData}
-                    onClose={() => setShowProfileMenu(false)}
-                  />
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                    <Link
+                      to="/profileuser"
+                      className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                      onClick={() => setShowProfileMenu(false)}
+                    >
+                      Hồ sơ của tôi
+                    </Link>
+                    <button
+                      onClick={handleSignOut}
+                      className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100"
+                    >
+                      Đăng xuất
+                    </button>
+                  </div>
                 )}
               </div>
             </>
