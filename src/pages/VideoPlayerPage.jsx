@@ -66,6 +66,22 @@ const VideoPlayerPage = () => {
     navigate(`/courses/${courseId}/lessons/${lesson.id}`);
   };
 
+  // Xử lý chuyển đến bài học trước
+  const handlePreviousLesson = () => {
+    const currentIndex = lessons.findIndex(l => l.id === currentLesson.id);
+    if (currentIndex > 0) {
+      handleLessonSelect(lessons[currentIndex - 1]);
+    }
+  };
+
+  // Xử lý chuyển đến bài học tiếp theo
+  const handleNextLesson = () => {
+    const currentIndex = lessons.findIndex(l => l.id === currentLesson.id);
+    if (currentIndex < lessons.length - 1) {
+      handleLessonSelect(lessons[currentIndex + 1]);
+    }
+  };
+
   // Xử lý lưu ghi chú
   const handleSaveNote = () => {
     // Trong thực tế, bạn sẽ gọi API để lưu ghi chú
@@ -181,6 +197,44 @@ const VideoPlayerPage = () => {
             >
               Your browser does not support the video tag.
             </video>
+          </div>
+        </div>
+
+        {/* Lesson Navigation */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <button
+              onClick={handlePreviousLesson}
+              disabled={lessons.findIndex(l => l.id === currentLesson.id) === 0}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-md ${
+                lessons.findIndex(l => l.id === currentLesson.id) === 0
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span>Bài trước</span>
+            </button>
+            <div className="text-center">
+              <h2 className="text-lg font-semibold">{currentLesson.title}</h2>
+              <p className="text-sm text-gray-500">Bài {lessons.findIndex(l => l.id === currentLesson.id) + 1} / {lessons.length}</p>
+            </div>
+            <button
+              onClick={handleNextLesson}
+              disabled={lessons.findIndex(l => l.id === currentLesson.id) === lessons.length - 1}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-md ${
+                lessons.findIndex(l => l.id === currentLesson.id) === lessons.length - 1
+                  ? 'text-gray-400 cursor-not-allowed'
+                  : 'text-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              <span>Bài tiếp</span>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
         </div>
 

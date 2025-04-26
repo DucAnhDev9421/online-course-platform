@@ -5,8 +5,8 @@ const CourseList = () => {
   const navigate = useNavigate();
   // Sample course data
   const [courses, setCourses] = useState([
-    { id: 1, title: 'React Fundamentals', category: 'Frontend', price: 49.99, rating: 4.5, students: 1200, image: 'https://via.placeholder.com/300x200' },
-    { id: 2, title: 'Node.js Advanced', category: 'Backend', price: 59.99, rating: 4.7, students: 850, image: 'https://via.placeholder.com/300x200' },
+    { id: 1, title: 'React Fundamentals', category: 'Frontend', price: 49.99, rating: 4.5, students: 1200, image: 'https://almablog-media.s3.ap-south-1.amazonaws.com/medium_React_Fundamentals_56e32fd939.png' },
+    { id: 2, title: 'Node.js Advanced', category: 'Backend', price: 59.99, rating: 4.7, students: 850, image: 'https://user-images.githubusercontent.com/42917814/172293103-e98aaf19-d5c0-4e4e-8046-a8cb41a2ff50.png' },
     { id: 3, title: 'UI/UX Design', category: 'Design', price: 39.99, rating: 4.3, students: 1500, image: 'https://via.placeholder.com/300x200' },
     { id: 4, title: 'Python for Beginners', category: 'Programming', price: 29.99, rating: 4.8, students: 2000, image: 'https://via.placeholder.com/300x200' },
     { id: 5, title: 'DevOps Essentials', category: 'DevOps', price: 69.99, rating: 4.6, students: 700, image: 'https://via.placeholder.com/300x200' },
@@ -128,7 +128,12 @@ const CourseList = () => {
         {currentCourses.length > 0 ? (
           currentCourses.map(course => (
             <div key={course.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-              <img src={course.image} alt={course.title} className="w-full h-48 object-cover" />
+              <div 
+                className="cursor-pointer"
+                onClick={() => handleViewDetail(course.id)}
+              >
+                <img src={course.image} alt={course.title} className="w-full h-48 object-cover" />
+              </div>
               <div className="p-4">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-bold text-lg">{course.title}</h3>
@@ -140,12 +145,6 @@ const CourseList = () => {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="font-bold">${course.price}</span>
-                  <button 
-                    onClick={() => handleViewDetail(course.id)}
-                    className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700"
-                  >
-                    Xem chi tiết
-                  </button>
                 </div>
               </div>
             </div>

@@ -9,6 +9,7 @@ const CourseDetail = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [reviews, setReviews] = useState([]);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
+  const [expandedLessonId, setExpandedLessonId] = useState(null);
 
   // Dữ liệu mẫu cho khóa học (trong thực tế, bạn sẽ fetch từ API)
   const coursesData = [
@@ -35,10 +36,54 @@ const CourseDetail = () => {
       level: 'Trung cấp',
       lastUpdated: '2025-02-15',
       lessons: [
-        { id: 1, title: 'Giới thiệu về React', duration: '15:30', completed: true },
-        { id: 2, title: 'Cài đặt môi trường', duration: '20:15', completed: true },
-        { id: 3, title: 'Components và Props', duration: '25:45', completed: false },
-        { id: 4, title: 'State và Lifecycle', duration: '18:20', completed: false }
+        { 
+          id: 1, 
+          title: 'Giới thiệu về React', 
+          duration: '15:30', 
+          completed: true,
+          description: 'Trong bài học này, bạn sẽ được tìm hiểu về React là gì, tại sao nên sử dụng React và cách React hoạt động. Chúng ta sẽ đi qua các khái niệm cơ bản như Virtual DOM, JSX và Components.',
+          resources: [
+            { title: 'Slide bài giảng', url: 'https://example.com/react-intro-slides.pdf' },
+            { title: 'Tài liệu tham khảo', url: 'https://example.com/react-docs.pdf' }
+          ],
+          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+        },
+        { 
+          id: 2, 
+          title: 'Cài đặt môi trường', 
+          duration: '20:15', 
+          completed: true,
+          description: 'Hướng dẫn chi tiết cách cài đặt Node.js, npm và các công cụ cần thiết để bắt đầu phát triển ứng dụng React. Bạn sẽ học cách tạo dự án React mới bằng Create React App và cấu trúc thư mục của một dự án React.',
+          resources: [
+            { title: 'Hướng dẫn cài đặt', url: 'https://example.com/setup-guide.pdf' },
+            { title: 'Cấu trúc dự án', url: 'https://example.com/project-structure.pdf' }
+          ],
+          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+        },
+        { 
+          id: 3, 
+          title: 'Components và Props', 
+          duration: '25:45', 
+          completed: false,
+          description: 'Tìm hiểu sâu về Components trong React, cách tạo và sử dụng Functional Components, Class Components. Học cách truyền dữ liệu giữa các components thông qua Props và cách xử lý Props validation.',
+          resources: [
+            { title: 'Components Guide', url: 'https://example.com/components-guide.pdf' },
+            { title: 'Props Examples', url: 'https://example.com/props-examples.pdf' }
+          ],
+          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+        },
+        { 
+          id: 4, 
+          title: 'State và Lifecycle', 
+          duration: '18:20', 
+          completed: false,
+          description: 'Khám phá cách quản lý state trong React components, sự khác biệt giữa state và props. Tìm hiểu về lifecycle methods trong Class Components và cách sử dụng useEffect hook trong Functional Components.',
+          resources: [
+            { title: 'State Management', url: 'https://example.com/state-management.pdf' },
+            { title: 'Lifecycle Methods', url: 'https://example.com/lifecycle-methods.pdf' }
+          ],
+          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+        }
       ]
     },
     {
@@ -64,10 +109,54 @@ const CourseDetail = () => {
       level: 'Nâng cao',
       lastUpdated: '2025-01-20',
       lessons: [
-        { id: 1, title: 'Giới thiệu Node.js nâng cao', duration: '20:00', completed: false },
-        { id: 2, title: 'Express.js và Middleware', duration: '25:30', completed: false },
-        { id: 3, title: 'Authentication với JWT', duration: '30:15', completed: false },
-        { id: 4, title: 'RESTful API Design', duration: '22:45', completed: false }
+        { 
+          id: 1, 
+          title: 'Giới thiệu Node.js nâng cao', 
+          duration: '20:00', 
+          completed: false,
+          description: 'Tổng quan về Node.js và các khái niệm nâng cao. Tìm hiểu về Event Loop, Asynchronous Programming, và cách Node.js xử lý các tác vụ đồng thời.',
+          resources: [
+            { title: 'Node.js Architecture', url: 'https://example.com/node-architecture.pdf' },
+            { title: 'Event Loop Guide', url: 'https://example.com/event-loop.pdf' }
+          ],
+          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+        },
+        { 
+          id: 2, 
+          title: 'Express.js và Middleware', 
+          duration: '25:30', 
+          completed: false,
+          description: 'Khám phá sâu về Express.js framework, cách tạo và sử dụng middleware, routing, và xử lý request/response. Học cách tối ưu hóa hiệu suất của ứng dụng Express.',
+          resources: [
+            { title: 'Express.js Guide', url: 'https://example.com/express-guide.pdf' },
+            { title: 'Middleware Patterns', url: 'https://example.com/middleware-patterns.pdf' }
+          ],
+          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+        },
+        { 
+          id: 3, 
+          title: 'Authentication với JWT', 
+          duration: '30:15', 
+          completed: false,
+          description: 'Học cách triển khai hệ thống xác thực và phân quyền sử dụng JWT (JSON Web Tokens). Tìm hiểu về các best practices trong bảo mật và cách bảo vệ API của bạn.',
+          resources: [
+            { title: 'JWT Implementation', url: 'https://example.com/jwt-implementation.pdf' },
+            { title: 'Security Best Practices', url: 'https://example.com/security-practices.pdf' }
+          ],
+          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+        },
+        { 
+          id: 4, 
+          title: 'RESTful API Design', 
+          duration: '22:45', 
+          completed: false,
+          description: 'Học cách thiết kế và triển khai RESTful API theo các tiêu chuẩn quốc tế. Tìm hiểu về versioning, documentation, và cách tối ưu hóa API cho hiệu suất tốt nhất.',
+          resources: [
+            { title: 'RESTful Design', url: 'https://example.com/restful-design.pdf' },
+            { title: 'API Documentation', url: 'https://example.com/api-docs.pdf' }
+          ],
+          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+        }
       ]
     },
     {
@@ -93,10 +182,54 @@ const CourseDetail = () => {
       level: 'Cơ bản',
       lastUpdated: '2025-03-05',
       lessons: [
-        { id: 1, title: 'Nguyên tắc thiết kế cơ bản', duration: '18:20', completed: false },
-        { id: 2, title: 'Nghiên cứu người dùng', duration: '22:10', completed: false },
-        { id: 3, title: 'Wireframing với Figma', duration: '25:40', completed: false },
-        { id: 4, title: 'Prototyping và Testing', duration: '20:30', completed: false }
+        { 
+          id: 1, 
+          title: 'Nguyên tắc thiết kế cơ bản', 
+          duration: '18:20', 
+          completed: false,
+          description: 'Tìm hiểu về các nguyên tắc cơ bản trong thiết kế UI/UX như hierarchy, contrast, balance, và consistency. Học cách áp dụng các nguyên tắc này vào thiết kế của bạn.',
+          resources: [
+            { title: 'Design Principles', url: 'https://example.com/design-principles.pdf' },
+            { title: 'Visual Hierarchy', url: 'https://example.com/visual-hierarchy.pdf' }
+          ],
+          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+        },
+        { 
+          id: 2, 
+          title: 'Nghiên cứu người dùng', 
+          duration: '22:10', 
+          completed: false,
+          description: 'Học cách tiến hành nghiên cứu người dùng hiệu quả, phân tích dữ liệu, và sử dụng insights để cải thiện thiết kế. Tìm hiểu về các phương pháp nghiên cứu khác nhau và khi nào nên sử dụng chúng.',
+          resources: [
+            { title: 'User Research Methods', url: 'https://example.com/research-methods.pdf' },
+            { title: 'Data Analysis', url: 'https://example.com/data-analysis.pdf' }
+          ],
+          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+        },
+        { 
+          id: 3, 
+          title: 'Wireframing với Figma', 
+          duration: '25:40', 
+          completed: false,
+          description: 'Học cách sử dụng Figma để tạo wireframes và prototypes. Tìm hiểu về các tính năng nâng cao của Figma như components, styles, và animations.',
+          resources: [
+            { title: 'Figma Tutorial', url: 'https://example.com/figma-tutorial.pdf' },
+            { title: 'Wireframing Guide', url: 'https://example.com/wireframing-guide.pdf' }
+          ],
+          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+        },
+        { 
+          id: 4, 
+          title: 'Prototyping và Testing', 
+          duration: '20:30', 
+          completed: false,
+          description: 'Học cách tạo prototypes tương tác và tiến hành kiểm thử người dùng. Tìm hiểu về các phương pháp kiểm thử khác nhau và cách thu thập phản hồi hiệu quả.',
+          resources: [
+            { title: 'Prototyping Guide', url: 'https://example.com/prototyping-guide.pdf' },
+            { title: 'User Testing', url: 'https://example.com/user-testing.pdf' }
+          ],
+          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+        }
       ]
     },
     {
@@ -230,8 +363,40 @@ const CourseDetail = () => {
 
   // Xử lý đăng ký khóa học
   const handleEnrollCourse = () => {
-    alert(`Đã đăng ký khóa học: ${course.title}`);
-    // Trong thực tế, bạn sẽ gọi API để xử lý đăng ký
+    try {
+      // Lấy danh sách khóa học đã đăng ký từ localStorage
+      const enrolledCourses = JSON.parse(localStorage.getItem('enrolledCourses') || '[]');
+      
+      // Kiểm tra xem khóa học đã được đăng ký chưa
+      const isAlreadyEnrolled = enrolledCourses.some(c => c.id === course.id);
+      
+      if (isAlreadyEnrolled) {
+        alert('Bạn đã đăng ký khóa học này rồi!');
+        return;
+      }
+      
+      // Thêm khóa học vào danh sách đã đăng ký
+      enrolledCourses.push({
+        id: course.id,
+        title: course.title,
+        thumbnail: course.image,
+        enrolledAt: new Date().toISOString(),
+        progress: 0,
+        lastAccessed: new Date().toISOString()
+      });
+      
+      // Lưu lại vào localStorage
+      localStorage.setItem('enrolledCourses', JSON.stringify(enrolledCourses));
+      
+      // Hiển thị thông báo thành công
+      alert(`Đã đăng ký thành công khóa học: ${course.title}`);
+      
+      // Chuyển hướng đến trang học
+      navigate(`/courses/${course.id}/learn`);
+    } catch (error) {
+      console.error('Error enrolling course:', error);
+      alert('Có lỗi xảy ra khi đăng ký khóa học. Vui lòng thử lại sau.');
+    }
   };
 
   // Xử lý bắt đầu học
@@ -250,6 +415,14 @@ const CourseDetail = () => {
     };
     setReviews([review, ...reviews]);
     setNewReview({ rating: 5, comment: '' });
+  };
+
+  const toggleLessonDetails = (lessonId) => {
+    if (expandedLessonId === lessonId) {
+      setExpandedLessonId(null);
+    } else {
+      setExpandedLessonId(lessonId);
+    }
   };
 
   if (loading) {
@@ -418,7 +591,7 @@ const CourseDetail = () => {
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
                   <div
-                    className="bg-blue-600 h-2.5 rounded-full"
+                    className="bg-purple-600 h-2.5 rounded-full"
                     style={{ width: `${progress}%` }}
                   ></div>
                 </div>
@@ -427,21 +600,90 @@ const CourseDetail = () => {
                 {course.lessons.map((lesson) => (
                   <div
                     key={lesson.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                    className="flex flex-col bg-gray-50 rounded-lg overflow-hidden"
                   >
-                    <div className="flex items-center">
-                      {lesson.completed ? (
-                        <svg className="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                      ) : (
-                        <svg className="w-5 h-5 text-gray-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                      <span className="font-medium">{lesson.title}</span>
+                    <div className="flex items-center justify-between p-4">
+                      <div className="flex items-center">
+                        {lesson.completed ? (
+                          <svg className="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <svg className="w-5 h-5 text-gray-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                        <span className="font-medium">{lesson.title}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-sm text-gray-500 mr-3">{lesson.duration}</span>
+                        <button 
+                          onClick={() => toggleLessonDetails(lesson.id)}
+                          className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                        >
+                          {expandedLessonId === lesson.id ? (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                          ) : (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
                     </div>
-                    <span className="text-sm text-gray-500">{lesson.duration}</span>
+                    
+                    {expandedLessonId === lesson.id && (
+                      <div className="bg-white p-4 border-t border-gray-200">
+                        <div className="mb-4">
+                          <h4 className="font-medium text-gray-900 mb-2">Nội dung bài học</h4>
+                          <p className="text-gray-600">{lesson.description || 'Chưa có mô tả chi tiết cho bài học này.'}</p>
+                        </div>
+                        
+                        {lesson.resources && lesson.resources.length > 0 && (
+                          <div className="mb-4">
+                            <h4 className="font-medium text-gray-900 mb-2">Tài liệu</h4>
+                            <ul className="space-y-2">
+                              {lesson.resources.map((resource, index) => (
+                                <li key={index} className="flex items-center text-purple-600 hover:text-purple-800">
+                                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                                  </svg>
+                                  <a href={resource.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                    {resource.title}
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        
+                        {lesson.videoUrl && (
+                          <div className="mb-4">
+                            <h4 className="font-medium text-gray-900 mb-2">Video bài giảng</h4>
+                            <div className="aspect-w-16 aspect-h-9">
+                              <iframe 
+                                src={lesson.videoUrl} 
+                                title={lesson.title}
+                                className="w-full h-64 rounded-md"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowFullScreen
+                              ></iframe>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="flex justify-end mt-4">
+                          <button
+                            onClick={() => navigate(`/courses/${courseId}/lessons/${lesson.id}`)}
+                            className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
+                          >
+                            Bắt đầu học
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

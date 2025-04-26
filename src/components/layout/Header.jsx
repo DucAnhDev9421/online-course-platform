@@ -162,12 +162,12 @@ export default function Header() {
           {isSignedIn ? (
             <>
               <nav className="hidden md:flex space-x-6">
-                <a href="#" className="font-medium hover:text-purple-700">
+                <Link to="/my-courses" className="font-medium hover:text-purple-700">
                   Khóa Học Của Tôi
-                </a>
-                <a href="#" className="font-medium hover:text-purple-700">
+                </Link>
+                <Link to="/teaching" className="font-medium hover:text-purple-700">
                   Giảng dạy
-                </a>
+                </Link>
               </nav>
 
               {/* Nút giỏ hàng */}

@@ -9,6 +9,9 @@ import CourseDetail from './pages/CourseDetail';
 import VideoPlayerPage from './pages/VideoPlayerPage';
 import SignIn from './components/auth/SignIn';
 import SignUp from './components/auth/SignUp';
+import MyCourses from './pages/MyCourses';
+import TeachingPage from './pages/TeachingPage';
+import CourseManagementPage from './pages/CourseManagementPage';
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -48,6 +51,21 @@ function AppLayout() {
           <Route path="/courses/:courseId/lessons/:lessonId" element={
             <ProtectedRoute>
               <VideoPlayerPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/my-courses" element={
+            <ProtectedRoute>
+              <MyCourses />
+            </ProtectedRoute>
+          } />
+          <Route path="/teaching" element={
+            <ProtectedRoute>
+              <TeachingPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/teaching/courses/:courseId" element={
+            <ProtectedRoute>
+              <CourseManagementPage />
             </ProtectedRoute>
           } />
         </Routes>

@@ -1,5 +1,5 @@
 // src/components/Homepage.jsx
-import HeroSection from '@components/HeroSection';
+import Slider from '../components/Slider';
 import Categories from '@components/Categories';
 import CourseCard from '@components/courses/CourseCard';
 
@@ -24,10 +24,8 @@ const courses = [
 
 const HomePage = () => {
   return (
-    <>
-      {/* Hero Section */}
-      <HeroSection />
-
+    <div>
+      <Slider />
       {/* Recommended Courses Section */}
       <section className="py-12 bg-white">
         <div className="container mx-auto px-4">
@@ -44,7 +42,7 @@ const HomePage = () => {
 
       {/* Categories Section */}
       <Categories />
-    </>
+    </div>
   );
 };
 
