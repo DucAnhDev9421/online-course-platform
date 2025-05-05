@@ -12,6 +12,9 @@ import SignUp from './components/auth/SignUp';
 import MyCourses from './pages/MyCourses';
 import TeachingPage from './pages/TeachingPage';
 import CourseManagementPage from './pages/CourseManagementPage';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminCourses from './pages/AdminCourses';
+
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -32,10 +35,11 @@ function AppLayout() {
   const location = useLocation();
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   const isVideoPlayerPage = location.pathname.includes('/courses/') && location.pathname.includes('/lessons/');
+  const isAdminPage = location.pathname.startsWith('/admin');
 
   return (
     <div className="min-h-screen flex flex-col">
-      {!isAuthPage && !isVideoPlayerPage && <Header />}
+      {!isAuthPage && !isVideoPlayerPage && !isAdminPage && <Header />}
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -68,9 +72,19 @@ function AppLayout() {
               <CourseManagementPage />
             </ProtectedRoute>
           } />
+          <Route path="/admin/courses" element={
+            <ProtectedRoute>
+              <AdminCourses />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/*" element={
+            <ProtectedRoute>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
         </Routes>
       </main>
-      {!isAuthPage && !isVideoPlayerPage && <Footer />}
+      {!isAuthPage && !isVideoPlayerPage && !isAdminPage && <Footer />}
     </div>
   );
 }
