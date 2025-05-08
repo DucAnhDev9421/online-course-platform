@@ -10,6 +10,15 @@ const CourseDetail = () => {
   const [reviews, setReviews] = useState([]);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [expandedLessonId, setExpandedLessonId] = useState(null);
+  const [showAllTopics, setShowAllTopics] = useState(false);
+  const [sections, setSections] = useState([]);
+  const [showAllSections, setShowAllSections] = useState(false);
+  const totalLectures = sections.reduce((sum, s) => sum + s.lectures, 0);
+  const totalDuration = sections.reduce((sum, s) => sum + s.duration, 0);
+  const totalSections = sections.length;
+  const [showFullInstructorDesc, setShowFullInstructorDesc] = useState(false);
+  const [showAllReviews, setShowAllReviews] = useState(false);
+  const [expandedReviews, setExpandedReviews] = useState({});
 
   // Dữ liệu mẫu cho khóa học (trong thực tế, bạn sẽ fetch từ API)
   const coursesData = [
@@ -339,6 +348,71 @@ const CourseDetail = () => {
     }
   ];
 
+  // Dữ liệu mẫu cho nội dung khóa học dạng section
+  const sampleSections = [
+    {
+      title: 'Introduction',
+      lectures: 3,
+      duration: 7,
+      expanded: false,
+    },
+    {
+      title: 'Cài đặt môi trường lập trình Python',
+      lectures: 5,
+      duration: 31,
+      expanded: false,
+    },
+    {
+      title: 'Biến và Kiểu dữ liệu (Variables and Data types)',
+      lectures: 2,
+      duration: 11,
+      expanded: false,
+    },
+    {
+      title: 'Các phép toán số học (Arithmetic operators)',
+      lectures: 3,
+      duration: 13,
+      expanded: false,
+    },
+    {
+      title: 'Chuỗi (string) trong Python',
+      lectures: 5,
+      duration: 21,
+      expanded: false,
+    },
+    {
+      title: 'Các phép toán so sánh và logic (comparison and logical operators)',
+      lectures: 3,
+      duration: 12,
+      expanded: false,
+    },
+    {
+      title: 'Kiểu dữ liệu List - Danh Sách',
+      lectures: 6,
+      duration: 30,
+      expanded: false,
+    },
+    {
+      title: 'Kiểu dữ liệu Tuple',
+      lectures: 3,
+      duration: 17,
+      expanded: false,
+    },
+    {
+      title: 'Kiểu dữ liệu Dictionary - Từ điển',
+      lectures: 2,
+      duration: 11,
+      expanded: false,
+    },
+    {
+      title: 'Kiểu dữ liệu Set - Tập hợp',
+      lectures: 2,
+      duration: 11,
+      expanded: false,
+    },
+    // ... có thể thêm nhiều phần nữa để test ...
+  ];
+
   useEffect(() => {
     // Giả lập việc gọi API để lấy dữ liệu khóa học
     setLoading(true);
@@ -351,6 +425,7 @@ const CourseDetail = () => {
       if (foundCourse) {
         setCourse(foundCourse);
         setReviews(sampleReviews);
+        setSections(sampleSections);
       }
       setLoading(false);
     }, 500);
@@ -425,6 +500,24 @@ const CourseDetail = () => {
     }
   };
 
+  const handleToggleSection = idx => {
+    setSections(sections => sections.map((s, i) => i === idx ? { ...s, expanded: !s.expanded } : s));
+  };
+  const handleExpandAll = () => {
+    setSections(sections => sections.map(s => ({ ...s, expanded: true })));
+  };
+
+  // Helper: formatTimeAgo
+  function formatTimeAgo(dateStr) {
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diff = (now - date) / 1000;
+    if (diff < 60 * 60 * 24) return 'Hôm nay';
+    if (diff < 60 * 60 * 24 * 7) return `${Math.floor(diff / (60 * 60 * 24))} ngày trước`;
+    if (diff < 60 * 60 * 24 * 30) return `${Math.floor(diff / (60 * 60 * 24 * 7))} tuần trước`;
+    return `${Math.floor(diff / (60 * 60 * 24 * 30))} tháng trước`;
+  }
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-16 flex justify-center">
@@ -456,312 +549,209 @@ const CourseDetail = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumb Navigation */}
-      <div className="flex items-center mb-6">
-        <button 
-          onClick={handleBackToList}
-          className="text-blue-600 hover:text-blue-800 flex items-center"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
-          </svg>
-          Danh sách khóa học
-        </button>
-        <span className="mx-2 text-gray-500">/</span>
-        <span className="text-gray-700">{course.title}</span>
+      {/* Course Header - Dark mode style */}
+      <div className="rounded-lg mb-8 p-8" style={{background: '#181822', color: '#fff'}}>
+        <h1 className="text-3xl md:text-4xl font-bold mb-2 leading-tight">{course.title}</h1>
+        <div className="text-lg text-gray-200 mb-4">{course.description}</div>
+        <div className="flex flex-wrap items-center gap-3 mb-3">
+          <span className="bg-cyan-700 text-xs px-2 py-1 rounded font-semibold mr-2">Bán chạy nhất</span>
+          <span className="flex items-center text-yellow-400 font-bold text-base mr-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            {course.rating}
+          </span>
+          <span className="text-blue-400 underline cursor-pointer text-sm">(637 xếp hạng)</span>
+          <span className="text-gray-300 text-sm ml-2">{course.students.toLocaleString()} học viên</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-300 mb-2">
+          <span>Được tạo bởi <span className="font-semibold text-white">{course.instructor || 'AI Coding'}</span></span>
+          <span className="flex items-center gap-1">
+            <i className="fas fa-history"></i>
+            Lần cập nhật gần nhất <span className="font-semibold">{course.lastUpdated ? (typeof course.lastUpdated === 'string' ? course.lastUpdated : new Date(course.lastUpdated).toLocaleDateString('vi-VN', { month: 'numeric', year: 'numeric' })) : '5/2025'}</span>
+          </span>
+        </div>
       </div>
-      
-      {/* Course Header */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
-        <div className="md:flex">
-          <div className="md:w-2/3 p-6">
-            <h1 className="text-3xl font-bold mb-4">{course.title}</h1>
+      {/* Main content with sidebar */}
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Main content */}
+        <div className="flex-1">
+          {/* Khung nội dung bài học */}
+          <div className="bg-white rounded-lg shadow p-8 mb-8">
+            <h2 className="text-2xl font-bold mb-4">Nội dung bài học</h2>
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 mb-2">
+              {(showAllTopics ? course.topics : course.topics.slice(0, 8)).map((topic, idx) => (
+                <li key={idx} className="flex items-start text-base text-gray-700">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500 mr-2 mt-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                  <span>{topic}</span>
+                </li>
+              ))}
+            </ul>
+            {course.topics.length > 8 && (
+              <button
+                className="text-purple-700 font-semibold hover:underline mt-2"
+                onClick={() => setShowAllTopics(v => !v)}
+              >
+                {showAllTopics ? 'Ẩn bớt' : 'Xem thêm'}
+              </button>
+            )}
+          </div>
+          {/* Nội dung khóa học dạng section */}
+          <div className="bg-white rounded-lg shadow p-8 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold">Nội dung khóa học</h2>
+              <button className="text-purple-700 font-semibold hover:underline" onClick={handleExpandAll}>Mở rộng tất cả các phần</button>
+            </div>
+            <div className="text-gray-600 text-sm mb-4">{totalSections} phần • {totalLectures} bài giảng • {totalDuration} phút tổng thời lượng</div>
+            <div className="border rounded-lg overflow-hidden">
+              {(showAllSections ? sections : sections.slice(0, 10)).map((section, idx) => (
+                <div key={idx} className="border-b last:border-b-0">
+                  <button className="w-full flex justify-between items-center px-4 py-3 font-semibold text-left hover:bg-gray-50" onClick={() => handleToggleSection(idx)}>
+                    <span>{section.title}</span>
+                    <span className="text-sm text-gray-500">{section.lectures} bài giảng • {section.duration} phút</span>
+                  </button>
+                  {section.expanded && (
+                    <div className="px-6 py-3 bg-gray-50 text-gray-700 text-sm">Nội dung chi tiết phần này...</div>
+                  )}
+                </div>
+              ))}
+            </div>
+            {sections.length > 10 && (
+              <button className="w-full mt-4 border border-purple-600 text-purple-700 py-2 rounded font-semibold hover:bg-purple-50" onClick={() => setShowAllSections(v => !v)}>
+                {showAllSections ? 'Ẩn bớt' : `${sections.length - 10} phần nữa`}
+              </button>
+            )}
+          </div>
+          {/* Mô tả khóa học */}
+          <div className="bg-white rounded-lg shadow p-8 mb-8">
+            <h2 className="text-2xl font-bold mb-4">Mô tả khóa học</h2>
+            <div className="text-gray-700 text-base whitespace-pre-line">{course.description}</div>
+          </div>
+          {/* Giảng viên */}
+          <div className="bg-white rounded-lg shadow p-8 mb-8">
+            <h2 className="text-2xl font-bold mb-4">Giảng viên</h2>
             <div className="flex items-center mb-4">
-              <span className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full mr-3">{course.category}</span>
-              <span className="text-yellow-500 flex items-center mr-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-                <span className="ml-1">{course.rating}</span>
-              </span>
-              <span className="text-gray-600">{course.students} học viên</span>
-            </div>
-            <p className="text-gray-600 mb-4">
-              Giảng viên: <span className="font-medium">{course.instructor}</span>
-            </p>
-            <p className="text-gray-700 mb-4">{course.description}</p>
-            <div className="flex flex-wrap">
-              <div className="mr-6 mb-4">
-                <div className="text-sm text-gray-500">Thời lượng</div>
-                <div className="text-md font-medium">{course.duration}</div>
-              </div>
-              <div className="mr-6 mb-4">
-                <div className="text-sm text-gray-500">Cập nhật</div>
-                <div className="text-md font-medium">{course.lastUpdated}</div>
-              </div>
-              <div className="mb-4">
-                <div className="text-sm text-gray-500">Trình độ</div>
-                <div className="text-md font-medium">{course.level}</div>
+              <img src="https://i.imgur.com/1bX5QH6.png" alt="AI Coding" className="w-24 h-24 rounded-full object-cover border-4 border-purple-200 mr-6" />
+              <div>
+                <a href="#" className="text-xl font-bold text-purple-700 hover:underline">AI Coding</a>
+                <div className="text-gray-500 text-base mb-2">Senior AI Engineer</div>
+                <div className="flex flex-wrap items-center gap-4 text-gray-600 text-sm">
+                  <span className="flex items-center"><i className="fas fa-star text-yellow-500 mr-1"></i>4,8 xếp hạng giảng viên</span>
+                  <span className="flex items-center"><i className="fas fa-user-check mr-1"></i>637 đánh giá</span>
+                  <span className="flex items-center"><i className="fas fa-users mr-1"></i>8755 học viên</span>
+                  <span className="flex items-center"><i className="fas fa-book mr-1"></i>1 khóa học</span>
+                </div>
               </div>
             </div>
+            {/* Mô tả giảng viên có thể ẩn/hiện */}
+            {(() => {
+              const desc = [
+                <span key="1" className="font-bold">Mình từng học Kỹ sư tài năng tại Đại Học Bách khoa Hà Nội trong 2 năm. Sau đó mình đi du học và tốt nghiệp thạc sĩ vật lý hạt nhân tại trường đại học MEPhI - một trong những ngôi trường tốt nhất tại liên bang Nga.</span>,
+                <> Sau đó, mình có cơ hội làm việc trong lĩnh vực công nghệ thông tin, bén duyên với lĩnh vực này và hiện tại <span className="font-bold text-purple-700">mình đang là Senior AI Engineer</span> ❤️❤️❤️</>,
+                <><br/><br/>Mình đã có nhiều năm kinh nghiệm làm việc với <span className="font-bold">Python và trí tuệ nhân tạo (AI)</span>. Các lĩnh vực chuyên môn chính của mình bao gồm: thị giác máy tính (<span className="font-bold">Computer Vision</span>), xử lý ngôn ngữ tự nhiên (<span className="font-bold">NLP</span>), truy xuất thông tin RAG, <span className="font-bold">AI Agents</span>, triển khai mô hình AI lên các nền tảng đám mây hoặc thiết bị biên, tối ưu hóa hiệu suất của các mô hình AI, <span className="font-bold">workflow automation với AI</span>.</>,
+                <><br/><br/>Ngôn ngữ: Tiếng Anh, Tiếng Nga</>,
+                <><br/><br/>Mình rất vui khi được gặp gỡ và chia sẻ kiến thức cũng như đồng hành cùng với các bạn. Hãy luôn giữ đam mê và nhiệt huyết, thành công sẽ đến với chúng ta!</>
+              ];
+              const maxLines = 4;
+              return (
+                <div className="text-gray-800 text-base leading-relaxed mt-2">
+                  {showFullInstructorDesc ? desc : desc.slice(0, maxLines)}
+                  {desc.length > maxLines && (
+                    <button
+                      className="block mt-2 text-purple-700 font-semibold hover:underline focus:outline-none"
+                      onClick={() => setShowFullInstructorDesc(v => !v)}
+                    >
+                      {showFullInstructorDesc ? 'Ẩn bớt ︿' : 'Xem thêm ˇ'}
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
           </div>
-          <div className="md:w-1/3 bg-gray-50 p-6 flex flex-col justify-between">
-            <div>
-              <img src={course.image} alt={course.title} className="w-full rounded-md mb-6" />
-              <div className="text-3xl font-bold mb-6">${course.price}</div>
-              <button 
-                onClick={handleStartLearning}
-                className="w-full bg-green-600 text-white py-3 rounded-md text-lg font-medium hover:bg-green-700 mb-4"
-              >
-                Bắt đầu học
-              </button>
-              <button 
-                onClick={handleEnrollCourse}
-                className="w-full bg-blue-600 text-white py-3 rounded-md text-lg font-medium hover:bg-blue-700"
-              >
-                Đăng ký khóa học
-              </button>
-              <p className="text-center text-gray-500 text-sm mt-4">Đảm bảo hoàn tiền trong 30 ngày</p>
+          {/* Đánh giá khóa học */}
+          <div className="bg-white rounded-lg shadow p-8 mb-8">
+            <div className="flex items-center mb-6">
+              <span className="text-2xl font-bold text-yellow-600 mr-2">★ {course.rating} xếp hạng khóa học</span>
+              <span className="text-lg font-semibold text-gray-700 ml-2">• {reviews.length} xếp hạng</span>
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {(showAllReviews ? reviews : reviews.slice(0, 3)).map((review, idx) => {
+                const isLong = review.comment.length > 120;
+                const expanded = expandedReviews[review.id];
+                return (
+                  <div key={review.id} className="border rounded-lg p-5 relative bg-gray-50">
+                    <div className="flex items-center mb-2">
+                      <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center font-bold text-lg text-white mr-3">
+                        {review.user.split(' ').map(w => w[0]).join('').toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="font-bold text-base">{review.user}</div>
+                        <div className="flex items-center text-yellow-500 text-sm">
+                          {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+                          <span className="text-gray-500 ml-2 text-xs">{formatTimeAgo(review.date)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-gray-800 text-base mb-2">
+                      {isLong && !expanded ? review.comment.slice(0, 120) + '...' : review.comment}
+                      {isLong && (
+                        <button
+                          className="ml-2 text-purple-700 font-semibold hover:underline text-sm"
+                          onClick={() => setExpandedReviews(r => ({ ...r, [review.id]: !expanded }))}
+                        >
+                          {expanded ? 'Ẩn bớt' : 'Hiện thêm'}
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-500 text-sm">
+                      <span>Bạn thấy hữu ích?</span>
+                      <button className="hover:text-purple-700"><i className="far fa-thumbs-up"></i></button>
+                      <button className="hover:text-purple-700"><i className="far fa-thumbs-down"></i></button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {reviews.length > 3 && (
+              <button
+                className="mt-6 px-5 py-2 bg-purple-100 text-purple-700 rounded font-semibold hover:bg-purple-200"
+                onClick={() => setShowAllReviews(v => !v)}
+              >
+                {showAllReviews ? 'Ẩn bớt đánh giá' : 'Hiện tất cả đánh giá'}
+              </button>
+            )}
           </div>
         </div>
-      </div>
-      
-      {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-md mb-8">
-        <div className="border-b border-gray-200">
-          <nav className="flex">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`px-6 py-3 text-sm font-medium ${
-                activeTab === 'overview'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Tổng quan
-            </button>
-            <button
-              onClick={() => setActiveTab('lessons')}
-              className={`px-6 py-3 text-sm font-medium ${
-                activeTab === 'lessons'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Bài học
-            </button>
-            <button
-              onClick={() => setActiveTab('reviews')}
-              className={`px-6 py-3 text-sm font-medium ${
-                activeTab === 'reviews'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Đánh giá
-            </button>
-          </nav>
-        </div>
-
-        {/* Tab Content */}
-        <div className="p-6">
-          {activeTab === 'overview' && (
-            <div>
-              <h2 className="text-2xl font-bold mb-4">Nội dung khóa học</h2>
-              <ul className="divide-y">
-                {course.topics.map((topic, index) => (
-                  <li key={index} className="py-3 flex items-start">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500 mr-3 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    <span>{topic}</span>
-                  </li>
-                ))}
+        {/* Sidebar bên phải */}
+        <aside className="w-full lg:w-96 flex-shrink-0">
+          <div className="bg-white rounded-lg shadow p-6 sticky top-8">
+            <div className="mb-4">
+              <img src={course.image} alt={course.title} className="w-full h-48 object-cover rounded-md" />
+            </div>
+            <div className="text-3xl font-bold text-gray-900 mb-4">{course.price ? course.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }) : 'Miễn phí'}</div>
+            <button className="w-full bg-purple-600 text-white py-3 rounded-md text-lg font-semibold hover:bg-purple-700 mb-3">Thêm vào giỏ hàng</button>
+            <button className="w-full border-2 border-purple-600 text-purple-700 py-3 rounded-md text-lg font-semibold hover:bg-purple-50 mb-2" onClick={handleStartLearning}>Học ngay</button>
+            <div className="text-center text-gray-500 text-sm mb-4">Đảm bảo hoàn tiền trong 30 ngày</div>
+            <div className="mb-4">
+              <div className="font-semibold mb-2">Khóa học này bao gồm:</div>
+              <ul className="text-gray-700 text-sm space-y-1">
+                <li>15 giờ video theo yêu cầu</li>
+                <li>8 bài viết</li>
+                <li>3 tài nguyên để tải xuống</li>
+                <li>Truy cập trên thiết bị di động và TV</li>
+                <li>Quyền truy cập đầy đủ suốt đời</li>
+                <li>Giấy chứng nhận hoàn thành</li>
               </ul>
             </div>
-          )}
-
-          {activeTab === 'lessons' && (
-            <div>
-              <div className="mb-6">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-gray-700">Tiến độ học tập</span>
-                  <span className="text-sm font-medium text-gray-700">{Math.round(progress)}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div
-                    className="bg-purple-600 h-2.5 rounded-full"
-                    style={{ width: `${progress}%` }}
-                  ></div>
-                </div>
-              </div>
-              <div className="space-y-4">
-                {course.lessons.map((lesson) => (
-                  <div
-                    key={lesson.id}
-                    className="flex flex-col bg-gray-50 rounded-lg overflow-hidden"
-                  >
-                    <div className="flex items-center justify-between p-4">
-                      <div className="flex items-center">
-                        {lesson.completed ? (
-                          <svg className="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5 text-gray-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                        <span className="font-medium">{lesson.title}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="text-sm text-gray-500 mr-3">{lesson.duration}</span>
-                        <button 
-                          onClick={() => toggleLessonDetails(lesson.id)}
-                          className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                        >
-                          {expandedLessonId === lesson.id ? (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                          ) : (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                    
-                    {expandedLessonId === lesson.id && (
-                      <div className="bg-white p-4 border-t border-gray-200">
-                        <div className="mb-4">
-                          <h4 className="font-medium text-gray-900 mb-2">Nội dung bài học</h4>
-                          <p className="text-gray-600">{lesson.description || 'Chưa có mô tả chi tiết cho bài học này.'}</p>
-                        </div>
-                        
-                        {lesson.resources && lesson.resources.length > 0 && (
-                          <div className="mb-4">
-                            <h4 className="font-medium text-gray-900 mb-2">Tài liệu</h4>
-                            <ul className="space-y-2">
-                              {lesson.resources.map((resource, index) => (
-                                <li key={index} className="flex items-center text-purple-600 hover:text-purple-800">
-                                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-                                  </svg>
-                                  <a href={resource.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                                    {resource.title}
-                                  </a>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        
-                        {lesson.videoUrl && (
-                          <div className="mb-4">
-                            <h4 className="font-medium text-gray-900 mb-2">Video bài giảng</h4>
-                            <div className="aspect-w-16 aspect-h-9">
-                              <iframe 
-                                src={lesson.videoUrl} 
-                                title={lesson.title}
-                                className="w-full h-64 rounded-md"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                allowFullScreen
-                              ></iframe>
-                            </div>
-                          </div>
-                        )}
-                        
-                        <div className="flex justify-end mt-4">
-                          <button
-                            onClick={() => navigate(`/courses/${courseId}/lessons/${lesson.id}`)}
-                            className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
-                          >
-                            Bắt đầu học
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm text-gray-500 cursor-pointer hover:underline">Chia sẻ</span>
+              <span className="text-sm text-gray-500 cursor-pointer hover:underline">Tặng khóa học này</span>
             </div>
-          )}
-
-          {activeTab === 'reviews' && (
-            <div>
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold mb-4">Viết đánh giá</h3>
-                <form onSubmit={handleSubmitReview}>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Đánh giá</label>
-                    <div className="flex items-center">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="button"
-                          onClick={() => setNewReview({ ...newReview, rating: star })}
-                          className="text-yellow-400 hover:text-yellow-500"
-                        >
-                          <svg
-                            className={`w-6 h-6 ${star <= newReview.rating ? 'fill-current' : 'fill-none'}`}
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Bình luận</label>
-                    <textarea
-                      className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      rows="4"
-                      value={newReview.comment}
-                      onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
-                      placeholder="Chia sẻ trải nghiệm của bạn về khóa học..."
-                    ></textarea>
-                  </div>
-                  <button
-                    type="submit"
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                  >
-                    Gửi đánh giá
-                  </button>
-                </form>
-              </div>
-
-              <div className="space-y-6">
-                {reviews.map((review) => (
-                  <div key={review.id} className="border-b border-gray-200 pb-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center">
-                        <span className="font-medium">{review.user}</span>
-                        <div className="flex ml-2">
-                          {[...Array(5)].map((_, i) => (
-                            <svg
-                              key={i}
-                              className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`}
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                            </svg>
-                          ))}
-                        </div>
-                      </div>
-                      <span className="text-sm text-gray-500">{review.date}</span>
-                    </div>
-                    <p className="text-gray-700">{review.comment}</p>
-                  </div>
-                ))}
-              </div>
+            <div className="mb-2">
+              <div className="text-sm text-gray-500 mb-1">Áp dụng coupon</div>
+              <input type="text" className="w-full border rounded px-3 py-2 mb-2" placeholder="Nhập coupon" />
+              <button className="w-full bg-purple-100 text-purple-700 py-2 rounded font-semibold hover:bg-purple-200">Áp dụng</button>
             </div>
-          )}
-        </div>
+          </div>
+        </aside>
       </div>
     </div>
   );

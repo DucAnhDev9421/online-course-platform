@@ -163,7 +163,7 @@ export default function Header() {
             <>
               <nav className="hidden md:flex space-x-6">
                 <Link to="/my-courses" className="font-medium hover:text-purple-700">
-                  Khóa Học Của Tôi
+                 Họp tập
                 </Link>
                 <Link to="/teaching" className="font-medium hover:text-purple-700">
                   Giảng dạy

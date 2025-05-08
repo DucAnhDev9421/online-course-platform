@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
+import { SignedIn, SignedOut, RedirectToSignIn, useAuth } from "@clerk/clerk-react";
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import HomePage from './pages/HomePage';
@@ -14,7 +14,8 @@ import TeachingPage from './pages/TeachingPage';
 import CourseManagementPage from './pages/CourseManagementPage';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminCourses from './pages/AdminCourses';
-
+import AdminUsers from './pages/AdminUsers';
+import NotFound from './pages/NotFound';
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -30,16 +31,17 @@ function ProtectedRoute({ children }) {
   );
 }
 
-//  component layout riêng biệt
+// component layout riêng biệt
 function AppLayout() {
   const location = useLocation();
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   const isVideoPlayerPage = location.pathname.includes('/courses/') && location.pathname.includes('/lessons/');
   const isAdminPage = location.pathname.startsWith('/admin');
+  const isTeachingPage = location.pathname.startsWith('/teaching');
 
   return (
     <div className="min-h-screen flex flex-col">
-      {!isAuthPage && !isVideoPlayerPage && !isAdminPage && <Header />}
+      {!isAuthPage && !isVideoPlayerPage && !isAdminPage && !isTeachingPage && <Header />}
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -62,19 +64,14 @@ function AppLayout() {
               <MyCourses />
             </ProtectedRoute>
           } />
-          <Route path="/teaching" element={
-            <ProtectedRoute>
-              <TeachingPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/teaching/courses/:courseId" element={
-            <ProtectedRoute>
-              <CourseManagementPage />
-            </ProtectedRoute>
-          } />
           <Route path="/admin/courses" element={
             <ProtectedRoute>
               <AdminCourses />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/users" element={
+            <ProtectedRoute>
+              <AdminUsers />
             </ProtectedRoute>
           } />
           <Route path="/admin/*" element={
@@ -82,9 +79,10 @@ function AppLayout() {
               <AdminDashboard />
             </ProtectedRoute>
           } />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
-      {!isAuthPage && !isVideoPlayerPage && !isAdminPage && <Footer />}
+      {!isAuthPage && !isVideoPlayerPage && !isAdminPage && !isTeachingPage && <Footer />}
     </div>
   );
 }
@@ -92,7 +90,19 @@ function AppLayout() {
 export default function App() {
   return (
     <Router>
-      <AppLayout />
+      <Routes>
+        <Route path="/teaching" element={
+          <ProtectedRoute>
+            <TeachingPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/teaching/courses/:courseId" element={
+          <ProtectedRoute>
+            <CourseManagementPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/*" element={<AppLayout />} />
+      </Routes>
     </Router>
   );
 }

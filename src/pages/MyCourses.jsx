@@ -72,7 +72,7 @@ function MyCourses() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Khóa học của tôi</h1>
+      <h1 className="text-3xl font-bold mb-8">Học tập</h1>
 
       {enrolledCourses.length === 0 ? (
         <div className="text-center py-12">

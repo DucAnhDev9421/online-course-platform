@@ -9,6 +9,7 @@ const VideoPlayerPage = () => {
   const [notes, setNotes] = useState('');
   const [progress, setProgress] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState('notes');
 
   // Dữ liệu mẫu cho bài học
   const sampleLessons = [
@@ -123,7 +124,98 @@ const VideoPlayerPage = () => {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
+      {/* Main Content - BÊN TRÁI */}
+      <div className="flex-1 flex flex-col">
+        {/* Video Player */}
+        <div className="relative bg-black">
+          <div className="absolute top-4 left-4 flex items-center space-x-4 z-10">
+            <button
+              onClick={() => navigate(`/courses/${courseId}`)}
+              className="bg-white/80 hover:bg-white p-2 rounded-full shadow-lg flex items-center"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="bg-white/80 hover:bg-white p-2 rounded-full shadow-lg"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+          <div className="w-full">
+            <video
+              className="w-full max-h-[60vh]"
+              controls
+              src={currentLesson.videoUrl}
+              poster="https://via.placeholder.com/1280x720"
+            >
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        </div>
+        {/* Tabs dưới video */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-5xl mx-auto px-4 py-2 flex items-center space-x-6">
+            <button className={`py-2 px-3 font-semibold ${activeTab === 'overview' ? 'border-b-2 border-purple-600 text-purple-700' : 'text-gray-600'}`} onClick={() => setActiveTab('overview')}>Tổng quan</button>
+            <button className={`py-2 px-3 font-semibold ${activeTab === 'notes' ? 'border-b-2 border-purple-600 text-purple-700' : 'text-gray-600'}`} onClick={() => setActiveTab('notes')}>Ghi chú</button>
+            <button className={`py-2 px-3 font-semibold ${activeTab === 'announcements' ? 'border-b-2 border-purple-600 text-purple-700' : 'text-gray-600'}`} onClick={() => setActiveTab('announcements')}>Thông báo</button>
+            <button className={`py-2 px-3 font-semibold ${activeTab === 'reviews' ? 'border-b-2 border-purple-600 text-purple-700' : 'text-gray-600'}`} onClick={() => setActiveTab('reviews')}>Đánh giá</button>
+            <button className={`py-2 px-3 font-semibold ${activeTab === 'tools' ? 'border-b-2 border-purple-600 text-purple-700' : 'text-gray-600'}`} onClick={() => setActiveTab('tools')}>Công cụ học tập</button>
+          </div>
+        </div>
+        {/* Nội dung tab */}
+        <div className="flex-1 p-6 overflow-y-auto bg-white">
+          <div className="max-w-5xl mx-auto">
+            {activeTab === 'notes' && (
+              <>
+                <h1 className="text-2xl font-bold mb-4">{currentLesson.title}</h1>
+                {/* Notes Section */}
+                <div className="mb-6">
+                  <h2 className="text-lg font-semibold mb-2">Ghi chú</h2>
+                  <textarea
+                    className="w-full h-32 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Ghi chú của bạn..."
+                  ></textarea>
+                  <button
+                    onClick={handleSaveNote}
+                    className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                  >
+                    Lưu ghi chú
+                  </button>
+                </div>
+                {/* Actions */}
+                <div className="flex justify-start">
+                  <button
+                    onClick={handleCompleteLesson}
+                    className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700"
+                  >
+                    Đánh dấu hoàn thành
+                  </button>
+                </div>
+              </>
+            )}
+            {activeTab === 'overview' && (
+              <div className="text-gray-700">Nội dung tổng quan về bài học sẽ hiển thị ở đây.</div>
+            )}
+            {activeTab === 'announcements' && (
+              <div className="text-gray-700">Chưa có thông báo nào cho bài học này.</div>
+            )}
+            {activeTab === 'reviews' && (
+              <div className="text-gray-700">Chức năng đánh giá sẽ hiển thị ở đây.</div>
+            )}
+            {activeTab === 'tools' && (
+              <div className="text-gray-700">Các công cụ học tập sẽ hiển thị ở đây.</div>
+            )}
+          </div>
+        </div>
+      </div>
+      {/* Sidebar - BÊN PHẢI */}
       <div className={`${isSidebarOpen ? 'w-80' : 'w-0'} bg-white shadow-lg transition-all duration-300`}>
         <div className="p-4 border-b border-gray-200">
           <h2 className="text-xl font-bold">Nội dung khóa học</h2>
@@ -163,113 +255,6 @@ const VideoPlayerPage = () => {
               </div>
             </div>
           ))}
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Video Player */}
-        <div className="relative bg-black">
-          <div className="absolute top-4 left-4 flex items-center space-x-4 z-10">
-            <button
-              onClick={() => navigate(`/courses/${courseId}`)}
-              className="bg-white/80 hover:bg-white p-2 rounded-full shadow-lg flex items-center"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </button>
-            <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="bg-white/80 hover:bg-white p-2 rounded-full shadow-lg"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          </div>
-          <div className="w-full">
-            <video
-              className="w-full max-h-[60vh]"
-              controls
-              src={currentLesson.videoUrl}
-              poster="https://via.placeholder.com/1280x720"
-            >
-              Your browser does not support the video tag.
-            </video>
-          </div>
-        </div>
-
-        {/* Lesson Navigation */}
-        <div className="bg-white border-b border-gray-200">
-          <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-            <button
-              onClick={handlePreviousLesson}
-              disabled={lessons.findIndex(l => l.id === currentLesson.id) === 0}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-md ${
-                lessons.findIndex(l => l.id === currentLesson.id) === 0
-                  ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-blue-600 hover:bg-blue-50'
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span>Bài trước</span>
-            </button>
-            <div className="text-center">
-              <h2 className="text-lg font-semibold">{currentLesson.title}</h2>
-              <p className="text-sm text-gray-500">Bài {lessons.findIndex(l => l.id === currentLesson.id) + 1} / {lessons.length}</p>
-            </div>
-            <button
-              onClick={handleNextLesson}
-              disabled={lessons.findIndex(l => l.id === currentLesson.id) === lessons.length - 1}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-md ${
-                lessons.findIndex(l => l.id === currentLesson.id) === lessons.length - 1
-                  ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-blue-600 hover:bg-blue-50'
-              }`}
-            >
-              <span>Bài tiếp</span>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Notes and Actions */}
-        <div className="flex-1 p-6 overflow-y-auto">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold mb-4">{currentLesson.title}</h1>
-            
-            {/* Notes Section */}
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-2">Ghi chú</h2>
-              <textarea
-                className="w-full h-32 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Ghi chú của bạn..."
-              ></textarea>
-              <button
-                onClick={handleSaveNote}
-                className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-              >
-                Lưu ghi chú
-              </button>
-            </div>
-
-            {/* Actions */}
-            <div className="flex justify-start">
-              <button
-                onClick={handleCompleteLesson}
-                className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700"
-              >
-                Đánh dấu hoàn thành
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
