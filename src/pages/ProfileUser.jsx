@@ -1,20 +1,33 @@
 // eslint-disable-next-line no-unused-vars
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useUser } from '@clerk/clerk-react';
 
 const ProfileUser = () => {
+  const { user } = useUser();
   const [profile, setProfile] = useState({
     firstName: '',
     lastName: '',
-    age: '',
+    phone: '',
+    birthday: '',
     jobTitle: '',
     sectionBU: '',
-    language: 'Tiếng Việt',
+    language: 'vi',
     avatar: null,
     avatarPreview: '/default-avatar.png'
   });
 
   const [isEditingAvatar, setIsEditingAvatar] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Cập nhật avatarPreview khi user đã đăng nhập
+  useEffect(() => {
+    if (user && user.imageUrl) {
+      setProfile(prev => ({
+        ...prev,
+        avatarPreview: user.imageUrl
+      }));
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -49,7 +62,7 @@ const ProfileUser = () => {
   };
 
   return (
-    <div className="profile-container max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
+    <div className="profile-container max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md mt-12">
       <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center sm:text-left">Hồ sơ công khai</h1>
       <p className="text-gray-600 mb-6 text-center sm:text-left">Thêm thông tin về bản thân bạn</p>
       
@@ -95,7 +108,7 @@ const ProfileUser = () => {
       <div className="divider h-px bg-gray-200 my-4"></div>
       
       <div className="basic-info mb-8">
-        <h2 className="text-lg font-semibold text-gray-700 mb-4">Thông tin cơ bản:</h2>
+        <h2 className="text-lg font-semibold text-gray-700 mb-4">Thông tin cá nhân</h2>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
@@ -118,6 +131,28 @@ const ProfileUser = () => {
               onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded"
               placeholder="Nhập tên của bạn"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 mb-1">Số điện thoại</label>
+            <input
+              type="text"
+              name="phone"
+              value={profile.phone}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded"
+              placeholder="Nhập số điện thoại"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-700 mb-1">Ngày sinh</label>
+            <input
+              type="date"
+              name="birthday"
+              value={profile.birthday}
+              onChange={handleChange}
+              className="w-full p-2 border border-gray-300 rounded"
+              placeholder="Chọn ngày sinh"
             />
           </div>
         </div>
@@ -149,19 +184,6 @@ const ProfileUser = () => {
       </div>
       
       <div className="divider h-px bg-gray-200 my-4"></div>
-      
-      <div className="language-section">
-        <h2 className="text-lg font-semibold text-gray-700 mb-4">Ngôn ngữ</h2>
-        <select
-          name="language"
-          value={profile.language}
-          onChange={handleChange}
-          className="w-full p-2 border border-gray-300 rounded"
-        >
-          <option value="vi">Tiếng Việt</option>
-          <option value="en">English</option>
-        </select>
-      </div>
       
       <div className="mt-8 flex justify-center sm:justify-end">
         <button 

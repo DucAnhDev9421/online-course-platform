@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUser, useClerk } from '@clerk/clerk-react';
-import ProfilePage from '../../pages/ProfilePage';
 
 export default function Header() {
   const location = useLocation();
@@ -221,6 +220,13 @@ export default function Header() {
                       onClick={() => setShowProfileMenu(false)}
                     >
                       Hồ sơ của tôi
+                    </Link>
+                    <Link
+                      to="/token"
+                      className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                      onClick={() => setShowProfileMenu(false)}
+                    >
+                      API Token
                     </Link>
                     <button
                       onClick={handleSignOut}

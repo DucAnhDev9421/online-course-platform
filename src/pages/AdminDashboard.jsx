@@ -14,7 +14,6 @@ import {
   Legend,
 } from 'chart.js';
 import '../assets/css/admin.css';
-import AdminLayout from '../layouts/AdminLayout';
 
 // Register ChartJS components
 ChartJS.register(
@@ -129,7 +128,7 @@ const AdminDashboard = () => {
   }, []);
 
   return (
-    <AdminLayout>
+    <div>
       {/* Dashboard Content */}
       <div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -239,7 +238,7 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
-    </AdminLayout>
+    </div>
   );
 };
 

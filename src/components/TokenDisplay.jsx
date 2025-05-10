@@ -8,7 +8,7 @@ const TokenDisplay = () => {
   useEffect(() => {
     const fetchToken = async () => {
       if (isSignedIn) {
-        const jwt = await getToken({ template: "my-api" }); // Mặc định là "clerk"
+        const jwt = await getToken(); // Không truyền template
         setToken(jwt);
       }
     };

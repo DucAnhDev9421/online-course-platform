@@ -1,7 +1,7 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { SignedIn, SignedOut, RedirectToSignIn, useAuth } from "@clerk/clerk-react";
-import Header from './components/layout/Header';
-import Footer from './components/layout/Footer';
+import { BrowserRouter as Router, Routes, Route, useLocation, Outlet } from 'react-router-dom';
+import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
+import Header from './components/AppLayout/Header';
+import Footer from './components/AppLayout/Footer';
 import HomePage from './pages/HomePage';
 import ProfileUser from './pages/ProfileUser';
 import CourseList from './pages/CourseList';
@@ -15,7 +15,10 @@ import CourseManagementPage from './pages/CourseManagementPage';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminCourses from './pages/AdminCourses';
 import AdminUsers from './pages/AdminUsers';
+import AdminCategories from './pages/AdminCategories';
+import AdminLayout from './layouts/AdminLayout';
 import NotFound from './pages/NotFound';
+import TokenPage from './pages/TokenPage';
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -38,10 +41,13 @@ function AppLayout() {
   const isVideoPlayerPage = location.pathname.includes('/courses/') && location.pathname.includes('/lessons/');
   const isAdminPage = location.pathname.startsWith('/admin');
   const isTeachingPage = location.pathname.startsWith('/teaching');
+  const isNotFoundPage = !['/', '/login', '/register', '/profileuser', '/courses', '/my-courses', '/admin', '/token'].some(path => 
+    location.pathname === path || location.pathname.startsWith(path + '/')
+  );
 
   return (
     <div className="min-h-screen flex flex-col">
-      {!isAuthPage && !isVideoPlayerPage && !isAdminPage && !isTeachingPage && <Header />}
+      {!isAuthPage && !isVideoPlayerPage && !isAdminPage && !isTeachingPage && !isNotFoundPage && <Header />}
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -64,25 +70,29 @@ function AppLayout() {
               <MyCourses />
             </ProtectedRoute>
           } />
-          <Route path="/admin/courses" element={
+          <Route path="/token" element={
             <ProtectedRoute>
-              <AdminCourses />
+              <TokenPage />
             </ProtectedRoute>
           } />
-          <Route path="/admin/users" element={
+          {/* Admin routes lồng layout */}
+          <Route path="/admin" element={
             <ProtectedRoute>
-              <AdminUsers />
+              <AdminLayout>
+                <Outlet />
+              </AdminLayout>
             </ProtectedRoute>
-          } />
-          <Route path="/admin/*" element={
-            <ProtectedRoute>
-              <AdminDashboard />
-            </ProtectedRoute>
-          } />
+          }>
+            <Route index element={<AdminDashboard />} />
+            <Route path="courses" element={<AdminCourses />} />
+            <Route path="courses/categories" element={<AdminCategories />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="*" element={<AdminDashboard />} />
+          </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
-      {!isAuthPage && !isVideoPlayerPage && !isAdminPage && !isTeachingPage && <Footer />}
+      {!isAuthPage && !isVideoPlayerPage && !isAdminPage && !isTeachingPage && !isNotFoundPage && <Footer />}
     </div>
   );
 }

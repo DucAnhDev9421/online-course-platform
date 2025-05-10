@@ -6,12 +6,14 @@ const LEVELS = [
   { value: 'intermediate', label: 'Trung cấp' },
   { value: 'expert', label: 'Chuyên gia' },
 ];
+
 const DURATIONS = [
   { value: '<2', label: 'Dưới 2 giờ' },
   { value: '2-10', label: '2 - 10 giờ' },
   { value: '10-20', label: '10 - 20 giờ' },
   { value: '>20', label: 'Trên 20 giờ' },
 ];
+
 const SORT_OPTIONS = [
   { value: 'popular', label: 'Phổ biến nhất' },
   { value: 'newest', label: 'Mới nhất' },
@@ -21,28 +23,31 @@ const SORT_OPTIONS = [
 
 const CourseList = () => {
   const navigate = useNavigate();
-  // Sample course data (bổ sung thêm trường cho filter demo)
   const [courses, setCourses] = useState([
-    { id: 1, title: 'React Fundamentals', category: 'Frontend', price: 49.99, rating: 4.5, students: 1200, image: 'https://almablog-media.s3.ap-south-1.amazonaws.com/medium_React_Fundamentals_56e32fd939.png', level: 'beginner', duration: 12 },
-    { id: 2, title: 'Node.js Advanced', category: 'Backend', price: 59.99, rating: 4.7, students: 850, image: 'https://user-images.githubusercontent.com/42917814/172293103-e98aaf19-d5c0-4e4e-8046-a8cb41a2ff50.png', level: 'expert', duration: 22 },
-    { id: 3, title: 'UI/UX Design', category: 'Design', price: 0, rating: 4.3, students: 1500, image: 'https://via.placeholder.com/300x200', level: 'intermediate', duration: 8 },
-    { id: 4, title: 'Python for Beginners', category: 'Programming', price: 29.99, rating: 4.8, students: 2000, image: 'https://via.placeholder.com/300x200', level: 'beginner', duration: 3 },
-    { id: 5, title: 'DevOps Essentials', category: 'DevOps', price: 69.99, rating: 4.6, students: 700, image: 'https://via.placeholder.com/300x200', level: 'intermediate', duration: 15 },
-    { id: 6, title: 'Mobile App Development', category: 'Mobile', price: 54.99, rating: 4.4, students: 950, image: 'https://via.placeholder.com/300x200', level: 'expert', duration: 25 },
-    { id: 7, title: 'JavaScript Mastery', category: 'Frontend', price: 39.99, rating: 4.2, students: 1100, image: 'https://via.placeholder.com/300x200', level: 'intermediate', duration: 10 },
-    { id: 8, title: 'Spring Boot Basics', category: 'Backend', price: 44.99, rating: 4.1, students: 600, image: 'https://via.placeholder.com/300x200', level: 'beginner', duration: 7 },
-    { id: 9, title: 'Photoshop for Beginners', category: 'Design', price: 0, rating: 4.0, students: 900, image: 'https://via.placeholder.com/300x200', level: 'beginner', duration: 5 },
-    { id: 10, title: 'Machine Learning 101', category: 'Programming', price: 79.99, rating: 4.9, students: 2100, image: 'https://via.placeholder.com/300x200', level: 'expert', duration: 30 },
-    { id: 11, title: 'AWS Cloud Practitioner', category: 'DevOps', price: 89.99, rating: 4.5, students: 800, image: 'https://via.placeholder.com/300x200', level: 'intermediate', duration: 18 },
-    { id: 12, title: 'Kotlin for Android', category: 'Mobile', price: 34.99, rating: 4.3, students: 500, image: 'https://via.placeholder.com/300x200', level: 'beginner', duration: 9 },
-    { id: 13, title: 'Vue.js Essentials', category: 'Frontend', price: 29.99, rating: 4.4, students: 750, image: 'https://via.placeholder.com/300x200', level: 'beginner', duration: 6 },
-    { id: 14, title: 'Express.js Crash Course', category: 'Backend', price: 24.99, rating: 4.0, students: 400, image: 'https://via.placeholder.com/300x200', level: 'beginner', duration: 4 },
-    { id: 15, title: 'Figma UI Design', category: 'Design', price: 19.99, rating: 4.6, students: 650, image: 'https://via.placeholder.com/300x200', level: 'intermediate', duration: 11 },
-    { id: 16, title: 'Data Science Bootcamp', category: 'Programming', price: 99.99, rating: 4.8, students: 1800, image: 'https://via.placeholder.com/300x200', level: 'expert', duration: 28 },
-    { id: 17, title: 'Docker for DevOps', category: 'DevOps', price: 59.99, rating: 4.7, students: 950, image: 'https://via.placeholder.com/300x200', level: 'intermediate', duration: 13 },
-    { id: 18, title: 'Flutter Mobile Apps', category: 'Mobile', price: 64.99, rating: 4.5, students: 1200, image: 'https://via.placeholder.com/300x200', level: 'expert', duration: 20 },
-    { id: 19, title: 'HTML & CSS Basics', category: 'Frontend', price: 0, rating: 4.1, students: 1300, image: 'https://via.placeholder.com/300x200', level: 'beginner', duration: 3 },
-    { id: 20, title: 'Python Data Analysis', category: 'Programming', price: 49.99, rating: 4.6, students: 1600, image: 'https://via.placeholder.com/300x200', level: 'intermediate', duration: 14 },
+    { 
+      id: 1, 
+      title: 'React Fundamentals', 
+      category: 'Frontend', 
+      price: 100000, 
+      rating: 4.5, 
+      students: 1200, 
+      image: 'https://almablog-media.s3.ap-south-1.amazonaws.com/medium_React_Fundamentals_56e32fd939.png', 
+      level: 'beginner', 
+      duration: 12 
+    },
+    { 
+      id: 2, 
+      title: 'Node.js Advanced', 
+      category: 'Backend', 
+      price: 100000, 
+      rating: 4.7, 
+      students: 850, 
+      image: 'https://user-images.githubusercontent.com/42917814/172293103-e98aaf19-d5c0-4e4e-8046-a8cb41a2ff50.png', 
+      level: 'expert', 
+      duration: 22 
+    },
+
+  
   ]);
 
   // Filter states
@@ -54,7 +59,6 @@ const CourseList = () => {
   const [levelFilter, setLevelFilter] = useState([]);
   const [durationFilter, setDurationFilter] = useState('');
   const [sortOption, setSortOption] = useState('popular');
-  // Accordion states
   const [openAccordion, setOpenAccordion] = useState({ rating: true, duration: false, level: false, price: false, category: false });
 
   // Pagination states
@@ -91,32 +95,29 @@ const CourseList = () => {
   const indexOfLastCourse = currentPage * coursesPerPage;
   const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
   const currentCourses = filteredCourses.slice(indexOfFirstCourse, indexOfLastCourse);
-  useEffect(() => { setCurrentPage(1); }, [categoryFilter, priceFilter, ratingFilter, searchQuery, levelFilter, durationFilter]);
+  
+  useEffect(() => { 
+    setCurrentPage(1); 
+  }, [categoryFilter, priceFilter, ratingFilter, searchQuery, levelFilter, durationFilter]);
 
-  // Xử lý khi click vào nút xem chi tiết
   const handleViewDetail = (courseId) => {
     navigate(`/courses/${courseId}`);
   };
 
-  // Accordion toggle
   const toggleAccordion = (key) => setOpenAccordion(prev => ({ ...prev, [key]: !prev[key] }));
 
-  // Level filter handler
   const handleLevelChange = (level) => {
     setLevelFilter(prev => prev.includes(level) ? prev.filter(l => l !== level) : [...prev, level]);
   };
 
   const [enrolledCourses, setEnrolledCourses] = useState([]);
 
-  // Load enrolled courses from localStorage on mount
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem('enrolledCourses') || '[]');
     setEnrolledCourses(stored);
   }, []);
 
-  // Đăng ký khóa học
   const handleEnroll = (course) => {
-    // Kiểm tra đã đăng ký chưa
     const isAlreadyEnrolled = enrolledCourses.some(c => c.id === course.id);
     if (isAlreadyEnrolled) {
       alert('Bạn đã đăng ký khóa học này rồi!');

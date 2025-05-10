@@ -6,8 +6,8 @@ const NotFound = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-white rounded-lg shadow-lg p-8 text-center">
+    <div className="min-h-screen w-full bg-gray-100 flex flex-col items-center justify-center p-0 m-0">
+      <div className="w-full h-full flex flex-col items-center justify-center">
         <img 
           src={error404Image} 
           alt="404 Error" 

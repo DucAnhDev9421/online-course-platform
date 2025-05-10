@@ -4,14 +4,19 @@ import '../assets/css/admin.css';
 
 const AdminLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [openCourses, setOpenCourses] = useState(true);
   const location = useLocation();
+
+  const isCoursesActive = location.pathname.startsWith('/admin/courses');
 
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
       <div className={`admin-sidebar ${isSidebarOpen ? 'expanded' : 'collapsed'} shadow-lg relative`}>
         <div className="p-4 flex items-center justify-between">
-          <h2 className={`text-xl font-bold text-white ${!isSidebarOpen && 'hidden'}`}>Academy Panel</h2>
+          <Link to="/" className={`text-xl font-bold text-white ${!isSidebarOpen && 'hidden'} hover:underline focus:outline-none`}>
+            Academy
+          </Link>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="sidebar-toggle-btn text-white hover:bg-white/10 p-2 rounded-lg transition-all"
@@ -24,10 +29,34 @@ const AdminLayout = ({ children }) => {
             <i className="fas fa-home mr-3"></i>
             <span className={!isSidebarOpen && 'hidden'}>Dashboard</span>
           </Link>
-          <Link to="/admin/courses" className={`nav-link flex items-center px-4 py-2 text-white hover:bg-white/10 ${location.pathname === '/admin/courses' ? 'font-bold bg-white/10' : ''}`}>
-            <i className="fas fa-book mr-3"></i>
-            <span className={!isSidebarOpen && 'hidden'}>Khóa học</span>
-          </Link>
+
+          <div>
+            <button
+              className={`nav-link flex items-center px-4 py-2 w-full text-left text-white hover:bg-white/10 ${isCoursesActive ? 'font-bold bg-white/10' : ''}`}
+              onClick={() => setOpenCourses(!openCourses)}
+            >
+              <i className="fas fa-book mr-3"></i>
+              <span className={!isSidebarOpen && 'hidden'}>Khóa học</span>
+              <i className={`fas ml-auto transition-transform ${openCourses ? 'fa-chevron-down' : 'fa-chevron-right'} ${!isSidebarOpen && 'hidden'}`}></i>
+            </button>
+            {openCourses && isSidebarOpen && (
+              <div className="ml-8">
+                <Link
+                  to="/admin/courses"
+                  className={`nav-link flex items-center px-4 py-2 text-white hover:bg-white/10 ${location.pathname === '/admin/courses' ? 'font-bold bg-white/20' : ''}`}
+                >
+                  <span>Quản lý khóa học</span>
+                </Link>
+                <Link
+                  to="/admin/courses/categories"
+                  className={`nav-link flex items-center px-4 py-2 text-white hover:bg-white/10 ${location.pathname === '/admin/courses/categories' ? 'font-bold bg-white/20' : ''}`}
+                >
+                  <span>Quản lý danh mục</span>
+                </Link>
+              </div>
+            )}
+          </div>
+
           <Link to="/admin/users" className="nav-link flex items-center px-4 py-2 text-white hover:bg-white/10">
             <i className="fas fa-users mr-3"></i>
             <span className={!isSidebarOpen && 'hidden'}>Người dùng</span>
