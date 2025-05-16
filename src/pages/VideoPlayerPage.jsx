@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import ReactPlayer from 'react-player';
 
 const VideoPlayerPage = () => {
   const { courseId, lessonId } = useParams();
@@ -41,12 +42,11 @@ const VideoPlayerPage = () => {
     for (const section of sections) {
       const lesson = section.lessons.find(l => l.id === parseInt(lessonId));
       if (lesson) {
-        foundLesson = lesson;
+        // Demo: override videoUrl thành link YouTube
+        foundLesson = { ...lesson, videoUrl: 'https://youtu.be/x0fSBAgBrOQ?list=PL_-VfJajZj0UXjlKfBwFX73usByw3Ph9Q' };
+        setCurrentLesson(foundLesson);
         break;
       }
-    }
-    if (foundLesson) {
-      setCurrentLesson(foundLesson);
     }
   }, [lessonId, sections]);
 
@@ -156,6 +156,12 @@ const VideoPlayerPage = () => {
     );
   };
 
+  // Xác định vị trí bài hiện tại để disable nút
+  const allLessons = sections.flatMap(section => section.lessons);
+  const currentIndex = allLessons.findIndex(l => l.id === currentLesson?.id);
+  const isFirstLesson = currentIndex === 0;
+  const isLastLesson = currentIndex === allLessons.length - 1;
+
   if (!currentLesson) {
     return (
       <div className="container mx-auto px-4 py-16">
@@ -188,15 +194,40 @@ const VideoPlayerPage = () => {
         {/* Main Content - BÊN TRÁI */}
         <div className="flex-1 flex flex-col">
           {/* Video Player */}
-          <div className="w-full pt-4 px-0">
-            <video
-              className="w-full rounded-lg shadow mb-4"
+          <div className="w-full px-0">
+            <ReactPlayer
+              url={currentLesson.videoUrl}
               controls
-              src={currentLesson.videoUrl}
-              poster="https://via.placeholder.com/1280x720"
-            >
-              Your browser does not support the video tag.
-            </video>
+              width="100%"
+              style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+              config={{
+                file: {
+                  attributes: {
+                    poster: 'https://via.placeholder.com/1280x720',
+                  }
+                }
+              }}
+            />
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mt-4">
+              <button
+                onClick={handlePreviousLesson}
+                className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-5 py-2 rounded-full shadow transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isFirstLesson}
+                title="Bài trước"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                Bài trước
+              </button>
+              <button
+                onClick={handleNextLesson}
+                className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white font-semibold px-5 py-2 rounded-full shadow transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLastLesson}
+                title="Bài tiếp"
+              >
+                Bài tiếp
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </button>
+            </div>
           </div>
           {/* Tabs dưới video */}
           <div className="w-full bg-white rounded-lg shadow">

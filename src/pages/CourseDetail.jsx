@@ -6,6 +6,7 @@ const CourseDetail = () => {
   const navigate = useNavigate();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isFavorite, setIsFavorite] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [reviews, setReviews] = useState([]);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
@@ -431,6 +432,40 @@ const CourseDetail = () => {
     }, 500);
   }, [courseId]);
 
+  // Kiểm tra và cập nhật trạng thái yêu thích
+  useEffect(() => {
+    if (course) {
+      const favoriteCourses = JSON.parse(localStorage.getItem('favoriteCourses') || '[]');
+      setIsFavorite(favoriteCourses.some(fc => fc.id === course.id));
+    }
+  }, [course]);
+
+  // Xử lý thêm/xóa khóa học yêu thích
+  const handleToggleFavorite = () => {
+    const favoriteCourses = JSON.parse(localStorage.getItem('favoriteCourses') || '[]');
+    
+    if (isFavorite) {
+      // Xóa khỏi danh sách yêu thích
+      const updatedFavorites = favoriteCourses.filter(fc => fc.id !== course.id);
+      localStorage.setItem('favoriteCourses', JSON.stringify(updatedFavorites));
+      setIsFavorite(false);
+    } else {
+      // Thêm vào danh sách yêu thích
+      const newFavorite = {
+        id: course.id,
+        title: course.title,
+        image: course.image,
+        price: course.price,
+        rating: course.rating,
+        students: course.students,
+        addedAt: new Date().toISOString()
+      };
+      favoriteCourses.push(newFavorite);
+      localStorage.setItem('favoriteCourses', JSON.stringify(favoriteCourses));
+      setIsFavorite(true);
+    }
+  };
+
   // Quay lại trang danh sách khóa học
   const handleBackToList = () => {
     navigate('/courses');
@@ -555,6 +590,30 @@ const CourseDetail = () => {
         <div className="text-lg text-gray-200 mb-4">{course.description}</div>
         <div className="flex flex-wrap items-center gap-3 mb-3">
           <span className="bg-cyan-700 text-xs px-2 py-1 rounded font-semibold mr-2">Bán chạy nhất</span>
+          <button 
+            onClick={handleToggleFavorite}
+            className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold transition-colors ${
+              isFavorite 
+                ? 'bg-red-500 text-white hover:bg-red-600' 
+                : 'bg-gray-700 text-white hover:bg-gray-600'
+            }`}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4"
+              fill={isFavorite ? "currentColor" : "none"}
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
+            </svg>
+            {isFavorite ? 'Đã yêu thích' : 'Yêu thích'}
+          </button>
           <span className="flex items-center text-yellow-400 font-bold text-base mr-2">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
             {course.rating}
@@ -721,13 +780,51 @@ const CourseDetail = () => {
           </div>
         </div>
         {/* Sidebar bên phải */}
-        <aside className="w-full lg:w-96 flex-shrink-0">
-          <div className="bg-white rounded-lg shadow p-6 sticky top-8">
+        <aside className="sidebar-udemy w-full lg:w-[340px] flex-shrink-0 -mt-24 z-10 relative">
+          <div className="sidebar-udemy-inner bg-white rounded-lg shadow p-6 sticky top-8">
+            {/* Video giới thiệu khóa học */}
             <div className="mb-4">
-              <img src={course.image} alt={course.title} className="w-full h-48 object-cover rounded-md" />
+              <iframe
+                width="100%"
+                height="200"
+                src={course.videoUrl || "https://www.youtube.com/embed/dQw4w9WgXcQ"}
+                title="Giới thiệu khóa học"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="rounded-md"
+              ></iframe>
             </div>
             <div className="text-3xl font-bold text-gray-900 mb-4">{course.price ? course.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }) : 'Miễn phí'}</div>
-            <button className="w-full bg-purple-600 text-white py-3 rounded-md text-lg font-semibold hover:bg-purple-700 mb-3">Thêm vào giỏ hàng</button>
+            <div className="flex gap-2 mb-3">
+              <button className="flex-1 bg-purple-600 text-white py-3 rounded-md text-lg font-semibold hover:bg-purple-700">
+                Thêm vào giỏ hàng
+              </button>
+              <button
+                onClick={handleToggleFavorite}
+                title={isFavorite ? 'Bỏ yêu thích' : 'Yêu thích'}
+                className={`w-12 h-12 flex items-center justify-center border-2 rounded-md transition-colors ${
+                  isFavorite
+                    ? 'border-red-500 bg-red-50 text-red-500 hover:bg-red-100'
+                    : 'border-gray-300 bg-white text-gray-400 hover:bg-gray-100'
+                }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-7 w-7"
+                  fill={isFavorite ? 'currentColor' : 'none'}
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                  />
+                </svg>
+              </button>
+            </div>
             <button className="w-full border-2 border-purple-600 text-purple-700 py-3 rounded-md text-lg font-semibold hover:bg-purple-50 mb-2" onClick={handleStartLearning}>Học ngay</button>
             <div className="text-center text-gray-500 text-sm mb-4">Đảm bảo hoàn tiền trong 30 ngày</div>
             <div className="mb-4">
@@ -752,6 +849,57 @@ const CourseDetail = () => {
             </div>
           </div>
         </aside>
+      </div>
+      {/* Khóa học tương tự */}
+      <div className="bg-white rounded-lg shadow p-8 mb-8">
+        <h2 className="text-2xl font-bold mb-6">Khóa học tương tự</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {coursesData
+            .filter(c => c.id !== course.id && (c.category === course.category || c.level === course.level))
+            .slice(0, 3)
+            .map(similarCourse => (
+              <div key={similarCourse.id} className="bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="relative">
+                  <img 
+                    src={similarCourse.image} 
+                    alt={similarCourse.title} 
+                    className="w-full h-48 object-cover cursor-pointer"
+                    onClick={() => navigate(`/courses/${similarCourse.id}`)}
+                  />
+                  {similarCourse.price === 0 && (
+                    <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                      Miễn phí
+                    </span>
+                  )}
+                </div>
+                <div className="p-4">
+                  <h3 
+                    className="font-bold text-lg mb-2 cursor-pointer hover:text-blue-700"
+                    onClick={() => navigate(`/courses/${similarCourse.id}`)}
+                  >
+                    {similarCourse.title}
+                  </h3>
+                  <div className="text-gray-600 text-sm mb-2">{similarCourse.category}</div>
+                  <div className="flex items-center text-sm text-gray-500 mb-2">
+                    <span className="text-yellow-500 font-semibold mr-1">★ {similarCourse.rating}</span>
+                    <span className="ml-2">{similarCourse.students} học viên</span>
+                    <span className="ml-2">• {similarCourse.duration} giờ</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-lg text-purple-700">
+                      {similarCourse.price === 0 ? 'Miễn phí' : similarCourse.price.toLocaleString('vi-VN', {style:'currency', currency:'VND'})}
+                    </span>
+                    <button 
+                      onClick={() => navigate(`/courses/${similarCourse.id}`)}
+                      className="text-blue-600 hover:text-blue-700 font-semibold"
+                    >
+                      Xem chi tiết
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+        </div>
       </div>
     </div>
   );

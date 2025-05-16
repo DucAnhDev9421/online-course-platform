@@ -8,8 +8,8 @@ const TokenDisplay = () => {
   useEffect(() => {
     const fetchToken = async () => {
       if (isSignedIn) {
-        const jwt = await getToken(); // Không truyền template
-        setToken(jwt);
+        const accessToken = await getToken();
+        setToken(accessToken);
       }
     };
 
@@ -18,7 +18,7 @@ const TokenDisplay = () => {
 
   return (
     <div>
-      <h2>Token:</h2>
+      <h2>Access Token:</h2>
       <textarea rows={10} cols={80} value={token} readOnly />
     </div>
   );

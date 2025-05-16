@@ -111,24 +111,33 @@ const CourseList = () => {
   };
 
   const [enrolledCourses, setEnrolledCourses] = useState([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null);
 
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem('enrolledCourses') || '[]');
     setEnrolledCourses(stored);
   }, []);
 
-  const handleEnroll = (course) => {
+  const handleEnrollClick = (course) => {
     const isAlreadyEnrolled = enrolledCourses.some(c => c.id === course.id);
     if (isAlreadyEnrolled) {
       alert('Bạn đã đăng ký khóa học này rồi!');
       return;
     }
+    setSelectedCourse(course);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmEnroll = () => {
+    if (!selectedCourse) return;
+
     const newEnrolled = [
       ...enrolledCourses,
       {
-        id: course.id,
-        title: course.title,
-        thumbnail: course.image,
+        id: selectedCourse.id,
+        title: selectedCourse.title,
+        thumbnail: selectedCourse.image,
         enrolledAt: new Date().toISOString(),
         progress: 0,
         lastAccessed: new Date().toISOString()
@@ -136,8 +145,10 @@ const CourseList = () => {
     ];
     localStorage.setItem('enrolledCourses', JSON.stringify(newEnrolled));
     setEnrolledCourses(newEnrolled);
-    alert(`Đăng ký thành công khóa học: ${course.title}`);
-    navigate(`/courses/${course.id}`);
+    setShowConfirmModal(false);
+    setSelectedCourse(null);
+    alert(`Đăng ký thành công khóa học: ${selectedCourse.title}`);
+    navigate(`/courses/${selectedCourse.id}`);
   };
 
   return (
@@ -336,10 +347,22 @@ const CourseList = () => {
                 return (
                   <div key={course.id} className="flex bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                     <div 
-                      className="w-56 h-36 flex-shrink-0 cursor-pointer bg-gray-100 flex items-center justify-center"
+                      className="w-56 h-36 flex-shrink-0 cursor-pointer bg-gray-100 flex items-center justify-center relative"
                       onClick={() => handleViewDetail(course.id)}
                     >
                       <img src={course.image} alt={course.title} className="object-cover w-full h-full" />
+                      <div className="absolute top-2 right-2 flex flex-col gap-2">
+                        {course.price === 0 && (
+                          <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                            Miễn phí
+                          </span>
+                        )}
+                        {course.id <= 2 && (
+                          <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                            Mới
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="flex-1 p-4 flex flex-col justify-between">
                       <div>
@@ -357,7 +380,7 @@ const CourseList = () => {
                         {isEnrolled ? (
                           <button disabled className="bg-gray-400 text-white px-4 py-2 rounded font-semibold cursor-not-allowed">Đã đăng ký</button>
                         ) : (
-                          <button onClick={() => handleEnroll(course)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-semibold">Đăng ký</button>
+                          <button onClick={() => handleEnrollClick(course)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-semibold">Đăng ký</button>
                         )}
                       </div>
                     </div>
@@ -386,6 +409,32 @@ const CourseList = () => {
           )}
         </div>
       </div>
+      {/* Modal xác nhận đăng ký */}
+      {showConfirmModal && selectedCourse && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-xl font-bold mb-4">Xác nhận đăng ký</h3>
+            <p className="mb-6">Bạn có chắc chắn muốn đăng ký khóa học "{selectedCourse.title}"?</p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => {
+                  setShowConfirmModal(false);
+                  setSelectedCourse(null);
+                }}
+                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleConfirmEnroll}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

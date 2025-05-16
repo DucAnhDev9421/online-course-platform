@@ -1,5 +1,5 @@
 // components/Header.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUser, useClerk } from '@clerk/clerk-react';
 
@@ -7,6 +7,7 @@ export default function Header() {
   const location = useLocation();
   const [showCategories, setShowCategories] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [favoriteCourses, setFavoriteCourses] = useState([]);
   const { user, isSignedIn } = useUser();
   const { signOut } = useClerk();
 
@@ -29,6 +30,17 @@ export default function Header() {
       subcategories: ['Digital Marketing', 'SEO', 'Social Media', 'Content Marketing']
     }
   ];
+
+  // Load danh sách khóa học yêu thích từ localStorage
+  useEffect(() => {
+    const storedFavorites = JSON.parse(localStorage.getItem('favoriteCourses') || '[]');
+    setFavoriteCourses(storedFavorites);
+  }, []);
+
+  // Cập nhật số lượng khóa học yêu thích trong localStorage
+  useEffect(() => {
+    localStorage.setItem('favoriteCourses', JSON.stringify(favoriteCourses));
+  }, [favoriteCourses]);
 
   // Đóng tất cả dropdown khi click bên ngoài
   const handleOutsideClick = (e) => {
@@ -162,12 +174,35 @@ export default function Header() {
             <>
               <nav className="hidden md:flex space-x-6">
                 <Link to="/my-courses" className="font-medium hover:text-purple-700">
-                 Họp tập
+                  Học tập
                 </Link>
                 <Link to="/teaching" className="font-medium hover:text-purple-700">
                   Giảng dạy
                 </Link>
               </nav>
+
+              {/* Nút khóa học yêu thích */}
+              <Link to="/favorites" className="p-2 text-gray-700 hover:text-red-500 relative">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                  />
+                </svg>
+                {favoriteCourses.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {favoriteCourses.length}
+                  </span>
+                )}
+              </Link>
 
               {/* Nút giỏ hàng */}
               <button className="p-2 text-gray-700 hover:text-purple-700 relative">
@@ -227,6 +262,13 @@ export default function Header() {
                       onClick={() => setShowProfileMenu(false)}
                     >
                       API Token
+                    </Link>
+                    <Link
+                      to="/admin"
+                      className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                      onClick={() => setShowProfileMenu(false)}
+                    >
+                      Dashboard
                     </Link>
                     <button
                       onClick={handleSignOut}

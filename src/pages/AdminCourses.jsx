@@ -18,11 +18,52 @@ const STEPS = [
   'Cài đặt',
 ];
 
+const TABS = [
+  { key: 'all', label: 'Tất cả' },
+  { key: 'approved', label: 'Đã duyệt' },
+  { key: 'pending', label: 'Chờ duyệt' },
+];
+
 const AdminCourses = () => {
+  const [tab, setTab] = useState('all');
+  const [search, setSearch] = useState('');
   const [courses, setCourses] = useState([
-    { id: 1, name: 'ReactJS Cơ bản', description: 'Khóa học ReactJS cho người mới bắt đầu', categoryId: 1, status: 'approved' },
-    { id: 2, name: 'Thiết kế UI/UX', description: 'Khóa học thiết kế giao diện người dùng', categoryId: 2, status: 'pending' },
-    { id: 3, name: 'Khởi nghiệp 101', description: 'Những điều cần biết khi khởi nghiệp', categoryId: 3, status: 'rejected' },
+    {
+      id: 1,
+      name: 'Revolutionize how you build the web...',
+      date: '2023-07-07',
+      instructor: 'Reva Yokk',
+      instructorAvatar: 'https://randomuser.me/api/portraits/women/1.jpg',
+      status: 'pending',
+      image: 'https://placehold.co/80x80/8b5cf6/fff?text=Gatsby',
+    },
+    {
+      id: 2,
+      name: 'Guide to Static Sites with Gatsby...',
+      date: '2023-07-06',
+      instructor: 'Brooklyn Simmons',
+      instructorAvatar: 'https://randomuser.me/api/portraits/women/2.jpg',
+      status: 'pending',
+      image: 'https://placehold.co/80x80/f472b6/fff?text=GraphQL',
+    },
+    {
+      id: 3,
+      name: 'The Modern JavaScript Courses ...',
+      date: '2023-07-05',
+      instructor: 'Miston Wilson',
+      instructorAvatar: 'https://randomuser.me/api/portraits/men/3.jpg',
+      status: 'pending',
+      image: 'https://placehold.co/80x80/f87171/fff?text=HTML5',
+    },
+    {
+      id: 4,
+      name: 'Courses JavaScript Heading Title ...',
+      date: '2023-07-05',
+      instructor: 'Guy Hawkins',
+      instructorAvatar: 'https://randomuser.me/api/portraits/men/4.jpg',
+      status: 'approved',
+      image: 'https://placehold.co/80x80/facc15/fff?text=JS',
+    },
   ]);
   const [categories] = useState([
     { id: 1, name: 'Lập trình', description: 'Các khóa học về lập trình' },
@@ -40,7 +81,6 @@ const AdminCourses = () => {
   const [coursePrice, setCoursePrice] = useState('');
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
-  const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
   const [sections, setSections] = useState([
@@ -118,23 +158,16 @@ const AdminCourses = () => {
   };
 
   const getStatusBadge = (status) => {
-    const statusConfig = {
-      approved: { text: 'Đã duyệt', icon: 'fa-check-circle' },
-      pending: { text: 'Chờ duyệt', icon: 'fa-clock' },
-      rejected: { text: 'Từ chối', icon: 'fa-times-circle' }
-    };
-    const config = statusConfig[status] || statusConfig.pending;
-    return (
-      <span className={`status-badge ${status}`}>
-        <i className={`fas ${config.icon} mr-1`}></i>
-        {config.text}
-      </span>
-    );
+    if (status === 'approved') return <span className="flex items-center text-green-600"><span className="h-2 w-2 rounded-full bg-green-500 mr-2"></span>Đã duyệt</span>;
+    if (status === 'pending') return <span className="flex items-center text-yellow-600"><span className="h-2 w-2 rounded-full bg-yellow-400 mr-2"></span>Chờ duyệt</span>;
+    if (status === 'rejected') return <span className="flex items-center text-red-600"><span className="h-2 w-2 rounded-full bg-red-500 mr-2"></span>Từ chối</span>;
+    return <span className="flex items-center text-gray-600"><span className="h-2 w-2 rounded-full bg-gray-400 mr-2"></span>Không xác định</span>;
   };
 
-  const filteredCourses = courses.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredCourses = courses.filter(c => {
+    if (tab === 'all') return c.name.toLowerCase().includes(search.toLowerCase());
+    return c.status === tab && c.name.toLowerCase().includes(search.toLowerCase());
+  });
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -302,7 +335,31 @@ const AdminCourses = () => {
                                           onChange={e => setEditingLecture({ ...editingLecture, title: e.target.value })}
                                         />
                                       ) : (
-                                        <span>{lecture.title}</span>
+                                        <>
+                                          <span>{lecture.title}</span>
+                                          {/* Dropdown chọn loại nội dung */}
+                                          <select
+                                            className="ml-2 border rounded px-1 py-0.5 text-xs"
+                                            value={lecture.contentType || ''}
+                                            onChange={e => handleChangeLectureContentType(section.id, lecture.id, e.target.value)}
+                                          >
+                                            <option value="">Chọn loại nội dung</option>
+                                            <option value="video">Video</option>
+                                            <option value="mixed">Bài giảng kết hợp</option>
+                                            <option value="article">Bài viết</option>
+                                          </select>
+                                          {/* Nếu là video thì hiện ô nhập URL */}
+                                          {lecture.contentType === 'video' && (
+                                            <input
+                                              type="text"
+                                              className="ml-2 border rounded px-2 py-1 text-xs"
+                                              placeholder="Nhập URL video..."
+                                              value={lecture.videoUrl || ''}
+                                              onChange={e => handleChangeLectureVideoUrl(section.id, lecture.id, e.target.value)}
+                                              style={{ minWidth: 180 }}
+                                            />
+                                          )}
+                                        </>
                                       )}
                                     </div>
                                     <div className="flex gap-2">
@@ -413,7 +470,7 @@ const AdminCourses = () => {
     if (!newLectureTitle[sectionId] || !newLectureTitle[sectionId].trim()) return;
     setSections(sections.map(s =>
       s.id === sectionId
-        ? { ...s, lectures: [...s.lectures, { id: Date.now(), title: newLectureTitle[sectionId] }] }
+        ? { ...s, lectures: [...s.lectures, { id: Date.now(), title: newLectureTitle[section.id], contentType: '', videoUrl: '' }] }
         : s
     ));
     setNewLectureTitle({ ...newLectureTitle, [sectionId]: '' });
@@ -434,6 +491,32 @@ const AdminCourses = () => {
     setSections(sections.map(s =>
       s.id === sectionId
         ? { ...s, lectures: s.lectures.filter(l => l.id !== lectureId) }
+        : s
+    ));
+  };
+  // Thay đổi loại nội dung bài học
+  const handleChangeLectureContentType = (sectionId, lectureId, contentType) => {
+    setSections(sections.map(s =>
+      s.id === sectionId
+        ? {
+            ...s,
+            lectures: s.lectures.map(l =>
+              l.id === lectureId ? { ...l, contentType } : l
+            )
+          }
+        : s
+    ));
+  };
+  // Thay đổi URL video bài học
+  const handleChangeLectureVideoUrl = (sectionId, lectureId, videoUrl) => {
+    setSections(sections.map(s =>
+      s.id === sectionId
+        ? {
+            ...s,
+            lectures: s.lectures.map(l =>
+              l.id === lectureId ? { ...l, videoUrl } : l
+            )
+          }
         : s
     ));
   };
@@ -464,21 +547,24 @@ const AdminCourses = () => {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6 gradient-text text-center">Quản lý Khóa học</h2>
-      {message && (
-        <div className={`mb-6 text-center py-2 rounded-lg ${messageType === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{message}</div>
-      )}
-      {!showAddForm && (
-        <div className="flex justify-end mb-4">
-          <button
-            className="py-2 px-4 bg-gradient-to-r from-green-600 to-teal-600 text-white font-semibold rounded-lg shadow-md hover:from-green-700 hover:to-teal-700 transition-all"
-            onClick={() => setShowAddForm(true)}
-          >
-            <i className="fas fa-plus mr-2"></i> Thêm khóa học
-          </button>
-        </div>
-      )}
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* Breadcrumb */}
+      <div className="mb-4 text-sm text-gray-500 flex items-center space-x-2">
+        <span className="text-purple-600 font-semibold cursor-pointer">Dashboard</span>
+        <span>/</span>
+        <span className="text-purple-600 font-semibold cursor-pointer">Khóa học</span>
+        <span>/</span>
+        <span>{tab === 'all' ? 'Tất cả' : tab === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'}</span>
+      </div>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-3xl font-bold">Khóa học</h1>
+        <button
+          className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold"
+          onClick={() => setShowAddForm(true)}
+        >
+          <i className="fas fa-plus mr-2"></i> Thêm khóa học mới
+        </button>
+      </div>
       {showAddForm ? (
         <>
           {renderStepper()}
@@ -488,157 +574,74 @@ const AdminCourses = () => {
           {step === 3 && renderStep4()}
         </>
       ) : (
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="font-semibold text-green-700 text-lg">Danh sách khóa học</h4>
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  className="admin-input pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Tìm kiếm khóa học..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                />
-                <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-              </div>
-              <div className="text-sm text-gray-500">
-                Hiển thị {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredCourses.length)} của {filteredCourses.length} khóa học
-              </div>
-            </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          {/* Tabs */}
+          <div className="flex border-b mb-4">
+            {TABS.map(t => (
+              <button
+                key={t.key}
+                className={`px-4 py-2 -mb-px font-medium border-b-2 transition-colors ${tab === t.key ? 'border-purple-600 text-purple-600' : 'border-transparent text-gray-500 hover:text-purple-600'}`}
+                onClick={() => setTab(t.key)}
+              >
+                {t.label}
+              </button>
+            ))}
           </div>
-          <div className="overflow-x-auto courses-table">
-            <table className="min-w-full bg-white border border-gray-200 rounded-lg">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tên khóa học</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Danh mục</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Mô tả</th>
-                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">Trạng thái</th>
-                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">Hành động</th>
+          {/* Search */}
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder="Tìm kiếm khóa học"
+              className="w-full border px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white">
+              <thead>
+                <tr className="text-left text-gray-700 text-sm">
+                  <th className="py-2 px-4">Khóa học</th>
+                  <th className="py-2 px-4">Giảng viên</th>
+                  <th className="py-2 px-4">Trạng thái</th>
+                  <th className="py-2 px-4">Hành động</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
-                {currentItems.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="px-4 py-8 text-center">
-                      <div className="flex flex-col items-center justify-center text-gray-500">
-                        <i className="fas fa-search text-4xl mb-2"></i>
-                        <p>Không tìm thấy khóa học nào</p>
+              <tbody>
+                {filteredCourses.length === 0 ? (
+                  <tr><td colSpan={4} className="text-center py-8 text-gray-400">Không có khóa học nào</td></tr>
+                ) : filteredCourses.map(course => (
+                  <tr key={course.id} className="border-t hover:bg-gray-50">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center space-x-3">
+                        <img src={course.image} alt="thumb" className="w-14 h-14 rounded-lg object-cover" />
+                        <div>
+                          <div className="font-semibold text-gray-900 truncate max-w-xs">{course.name}</div>
+                          <div className="text-xs text-gray-500">Thêm ngày {new Date(course.date).toLocaleDateString('vi-VN')}</div>
+                        </div>
                       </div>
                     </td>
+                    <td className="py-3 px-4 align-top">
+                      <span>{course.instructor}</span>
+                    </td>
+                    <td className="py-3 px-4 align-top">{getStatusBadge(course.status)}</td>
+                    <td className="py-3 px-4 align-top space-x-2">
+                      {course.status === 'pending' && (
+                        <>
+                          <button onClick={() => handleStatusChange(course.id, 'rejected')} className="border px-3 py-1 rounded text-gray-700 hover:bg-gray-100">Từ chối</button>
+                          <button onClick={() => handleStatusChange(course.id, 'approved')} className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">Duyệt</button>
+                        </>
+                      )}
+                      {course.status === 'approved' && (
+                        <button onClick={() => handleStatusChange(course.id, 'pending')} className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600">Đổi trạng thái</button>
+                      )}
+                    </td>
                   </tr>
-                ) : (
-                  currentItems.map(course => (
-                    <tr key={course.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3 font-medium text-gray-800">{course.name}</td>
-                      <td className="px-4 py-3 text-gray-600">
-                        {categories.find(c => c.id === course.categoryId)?.name || 'Không rõ danh mục'}
-                      </td>
-                      <td className="px-4 py-3 text-gray-500 text-sm">
-                        {course.description || <span className="italic text-gray-300">(Không có)</span>}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center space-x-2">
-                          {getStatusBadge(course.status)}
-                          <div className="status-dropdown">
-                            <button className="status-dropdown-button">
-                              <i className="fas fa-chevron-down text-xs"></i>
-                            </button>
-                            <div className="status-dropdown-menu">
-                              <button
-                                onClick={() => handleStatusChange(course.id, 'approved')}
-                                className="status-dropdown-item approved"
-                              >
-                                <i className="fas fa-check-circle"></i>
-                                Đã duyệt
-                              </button>
-                              <button
-                                onClick={() => handleStatusChange(course.id, 'pending')}
-                                className="status-dropdown-item pending"
-                              >
-                                <i className="fas fa-clock"></i>
-                                Chờ duyệt
-                              </button>
-                              <button
-                                onClick={() => handleStatusChange(course.id, 'rejected')}
-                                className="status-dropdown-item rejected"
-                              >
-                                <i className="fas fa-times-circle"></i>
-                                Từ chối
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex justify-center space-x-2">
-                          <button
-                            onClick={() => handleEditCourse(course)}
-                            className="text-blue-500 hover:text-blue-700 px-2 py-1 rounded transition-all"
-                            title="Chỉnh sửa khóa học"
-                          >
-                            <i className="fas fa-edit"></i>
-                          </button>
-                          <button
-                            onClick={() => handleDeleteCourse(course.id)}
-                            className="text-red-500 hover:text-red-700 px-2 py-1 rounded transition-all"
-                            title="Xóa khóa học"
-                          >
-                            <i className="fas fa-trash"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
           </div>
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
-              <div className="text-sm text-gray-500">
-                Trang {currentPage} của {totalPages}
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`px-3 py-1 rounded-md ${
-                    currentPage === 1
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                  }`}
-                >
-                  <i className="fas fa-chevron-left"></i>
-                </button>
-                {[...Array(totalPages)].map((_, index) => (
-                  <button
-                    key={index + 1}
-                    onClick={() => handlePageChange(index + 1)}
-                    className={`px-3 py-1 rounded-md ${
-                      currentPage === index + 1
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                    }`}
-                  >
-                    {index + 1}
-                  </button>
-                ))}
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`px-3 py-1 rounded-md ${
-                    currentPage === totalPages
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                  }`}
-                >
-                  <i className="fas fa-chevron-right"></i>
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
