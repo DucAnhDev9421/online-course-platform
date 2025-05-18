@@ -1,14 +1,13 @@
 // eslint-disable-next-line no-unused-vars
 import React, { useState, useRef, useEffect } from 'react';
 import { useUser } from '@clerk/clerk-react';
+import axios from 'axios';
 
 const ProfileUser = () => {
   const { user } = useUser();
   const [profile, setProfile] = useState({
     firstName: '',
     lastName: '',
-    phone: '',
-    birthday: '',
     jobTitle: '',
     sectionBU: '',
     language: 'vi',
@@ -26,6 +25,25 @@ const ProfileUser = () => {
         ...prev,
         avatarPreview: user.imageUrl
       }));
+    }
+    // Lấy thông tin họ tên và ảnh từ API mới nếu có user.id
+    if (user && user.id) {
+      axios.get(`https://localhost:7261/api/users/${user.id}/profile`)
+        .then(res => {
+          const data = res.data;
+          setProfile(prev => ({
+            ...prev,
+            firstName: data.firstName || '',
+            lastName: data.lastName || '',
+            imageUrl: data.imageUrl || '',
+            avatarPreview: data.imageUrl || prev.avatarPreview,
+            profileImageData: data.profileImageData || ''
+          }));
+        })
+        .catch(err => {
+          // Có thể log lỗi hoặc bỏ qua
+          console.error('Lỗi lấy thông tin user:', err);
+        });
     }
   }, [user]);
 
@@ -56,9 +74,19 @@ const ProfileUser = () => {
     }
   };
 
-  const handleSaveProfile = () => {
-    // Xử lý lưu thông tin profile
-    console.log('Profile saved:', profile);
+  const handleSaveProfile = async () => {
+    try {
+      await axios.patch(`https://localhost:7261/api/users/${user.id}/profile`, {
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        imageUrl: user.imageUrl || '',
+        profileImageData: profile.profileImageData || ''
+      });
+      alert('Cập nhật thông tin thành công!');
+    } catch (error) {
+      alert('Có lỗi khi cập nhật thông tin!');
+      console.error('Lỗi cập nhật:', error.response ? error.response.data : error);
+    }
   };
 
   return (
@@ -131,28 +159,6 @@ const ProfileUser = () => {
               onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded"
               placeholder="Nhập tên của bạn"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 mb-1">Số điện thoại</label>
-            <input
-              type="text"
-              name="phone"
-              value={profile.phone}
-              onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded"
-              placeholder="Nhập số điện thoại"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 mb-1">Ngày sinh</label>
-            <input
-              type="date"
-              name="birthday"
-              value={profile.birthday}
-              onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded"
-              placeholder="Chọn ngày sinh"
             />
           </div>
         </div>

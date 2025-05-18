@@ -20,6 +20,7 @@ import AdminLayout from './layouts/AdminLayout';
 import NotFound from './pages/NotFound';
 import TokenPage from './pages/TokenPage';
 import Favorites from './pages/Favorites';
+import Cart from './pages/Cart';
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -42,7 +43,7 @@ function AppLayout() {
   const isVideoPlayerPage = location.pathname.includes('/courses/') && location.pathname.includes('/lessons/');
   const isAdminPage = location.pathname.startsWith('/admin');
   const isTeachingPage = location.pathname.startsWith('/teaching');
-  const isNotFoundPage = !['/', '/login', '/register', '/profileuser', '/courses', '/my-courses', '/admin', '/token', '/favorites'].some(path => 
+  const isNotFoundPage = !['/', '/login', '/register', '/profileuser', '/courses', '/my-courses', '/admin', '/token', '/favorites', '/cart'].some(path => 
     location.pathname === path || location.pathname.startsWith(path + '/')
   );
 
@@ -77,6 +78,7 @@ function AppLayout() {
             </ProtectedRoute>
           } />
           <Route path="/favorites" element={<Favorites />} />
+          <Route path="/cart" element={<Cart />} />
           {/* Admin routes lồng layout */}
           <Route path="/admin" element={
             <ProtectedRoute>

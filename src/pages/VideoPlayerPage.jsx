@@ -35,6 +35,10 @@ const VideoPlayerPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('notes');
   const [openSectionIds, setOpenSectionIds] = useState([sampleSections[0].id]);
+  const [reviewInput, setReviewInput] = useState({ rating: 5, comment: '' });
+  const [reviews, setReviews] = useState([
+    // ... existing code hoặc dữ liệu mẫu ...
+  ]);
 
   // Tìm bài học hiện tại
   useEffect(() => {
@@ -372,21 +376,47 @@ const VideoPlayerPage = () => {
                         </div>
                       </div>
                     </div>
-                    {/* Bộ lọc và tìm kiếm */}
-                    <div className="flex flex-wrap items-center gap-4 mb-6">
-                      <input type="text" placeholder="Tìm kiếm đánh giá" className="flex-1 border px-4 py-2 rounded-md" />
-                      <button className="bg-purple-600 text-white px-4 py-2 rounded-md flex items-center hover:bg-purple-700"><svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></button>
-                      <div>
-                        <label className="mr-2 font-medium">Lọc xếp hạng</label>
-                        <select className="border px-3 py-2 rounded-md">
-                          <option>Tất cả xếp hạng</option>
-                          <option>5 sao</option>
-                          <option>4 sao</option>
-                          <option>3 sao</option>
-                          <option>2 sao</option>
-                          <option>1 sao</option>
-                        </select>
+                    {/* Form nhập đánh giá mới */}
+                    <div className="mb-8 bg-gray-50 rounded-lg p-6 shadow flex flex-col gap-3">
+                      <div className="font-semibold text-lg mb-2">Viết đánh giá của bạn</div>
+                      <div className="flex items-center gap-2 mb-2">
+                        {[1,2,3,4,5].map(star => (
+                          <button
+                            key={star}
+                            type="button"
+                            className={`text-2xl ${reviewInput.rating >= star ? 'text-yellow-400' : 'text-gray-300'}`}
+                            onClick={() => setReviewInput(r => ({ ...r, rating: star }))}
+                            aria-label={`Chọn ${star} sao`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                        <span className="ml-2 text-sm text-gray-500">{reviewInput.rating} sao</span>
                       </div>
+                      <textarea
+                        className="w-full border rounded-md px-3 py-2 mb-2 focus:ring-2 focus:ring-purple-500"
+                        rows={3}
+                        placeholder="Nhận xét của bạn..."
+                        value={reviewInput.comment}
+                        onChange={e => setReviewInput(r => ({ ...r, comment: e.target.value }))}
+                      />
+                      <button
+                        className="self-end bg-purple-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-purple-700 transition"
+                        onClick={() => {
+                          if (!reviewInput.comment.trim()) return;
+                          setReviews([{ 
+                            id: Date.now(),
+                            user: 'Bạn',
+                            rating: reviewInput.rating,
+                            comment: reviewInput.comment,
+                            date: new Date().toISOString(),
+                            avatar: null
+                          }, ...reviews]);
+                          setReviewInput({ rating: 5, comment: '' });
+                        }}
+                      >
+                        Gửi đánh giá
+                      </button>
                     </div>
                     {/* Danh sách đánh giá */}
                     <div className="space-y-8">

@@ -5,12 +5,16 @@ import { useState } from 'react';
 function InstructorLayout({ sidebarTab, setSidebarTab, children }) {
   const { user } = useUser();
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className={`transition-all duration-200 bg-white border-r border-gray-200 flex flex-col py-6 px-4 fixed inset-y-0 left-0 z-20 ${sidebarOpen ? 'w-64' : 'w-16'} overflow-hidden`}>
+      <aside
+        className={`transition-all duration-200 bg-white border-r border-gray-200 flex flex-col py-6 px-4 fixed inset-y-0 left-0 z-20 ${sidebarOpen ? 'w-64' : 'w-16'} overflow-hidden`}
+        onMouseEnter={() => setSidebarOpen(true)}
+        onMouseLeave={() => setSidebarOpen(false)}
+      >
         <div className="mb-8 flex items-center justify-center">
           <span className="text-2xl font-bold text-purple-700">Academy</span>
         </div>
@@ -44,17 +48,10 @@ function InstructorLayout({ sidebarTab, setSidebarTab, children }) {
       <div className={`flex-1 ${sidebarOpen ? 'ml-64' : 'ml-16'} min-h-screen flex flex-col transition-all duration-200`}>
         {/* Header */}
         <header className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="text-purple-700 focus:outline-none text-2xl"
-              title={sidebarOpen ? 'Thu gọn menu' : 'Mở rộng menu'}
-            >
-              <i className={`fas ${sidebarOpen ? 'fa-bars-staggered' : 'fa-bars'}`}></i>
-            </button>
+          <div className="flex items-center">
             <button
               onClick={() => navigate('/')}
-              className="text-purple-700 font-semibold hover:underline"
+              className="text-purple-700 font-semibold hover:underline flex items-center"
             >
               <i className="fas fa-arrow-left mr-2"></i>Học viên
             </button>

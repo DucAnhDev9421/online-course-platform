@@ -2,12 +2,14 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUser, useClerk } from '@clerk/clerk-react';
+import { FaUser, FaKey, FaTachometerAlt, FaSignOutAlt } from 'react-icons/fa';
 
 export default function Header() {
   const location = useLocation();
   const [showCategories, setShowCategories] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [favoriteCourses, setFavoriteCourses] = useState([]);
+  const [cartCourses, setCartCourses] = useState([]);
   const { user, isSignedIn } = useUser();
   const { signOut } = useClerk();
 
@@ -41,6 +43,12 @@ export default function Header() {
   useEffect(() => {
     localStorage.setItem('favoriteCourses', JSON.stringify(favoriteCourses));
   }, [favoriteCourses]);
+
+  // Load danh sách khóa học trong giỏ từ localStorage
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem('cartCourses') || '[]');
+    setCartCourses(stored);
+  }, []);
 
   // Đóng tất cả dropdown khi click bên ngoài
   const handleOutsideClick = (e) => {
@@ -81,10 +89,12 @@ export default function Header() {
           {/* Nút Danh mục */}
           <div
             className="relative hidden md:block dropdown"
-            onMouseEnter={() => setShowCategories(true)}
-            onMouseLeave={() => setShowCategories(false)}
           >
-            <button className="font-medium hover:text-purple-700 flex items-center">
+            <button
+              className="font-medium hover:text-purple-700 flex items-center"
+              onClick={() => setShowCategories((prev) => !prev)}
+              type="button"
+            >
               Danh mục
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -205,7 +215,7 @@ export default function Header() {
               </Link>
 
               {/* Nút giỏ hàng */}
-              <button className="p-2 text-gray-700 hover:text-purple-700 relative">
+              <Link to="/cart" className="p-2 text-gray-700 hover:text-purple-700 relative">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-6 w-6"
@@ -220,10 +230,12 @@ export default function Header() {
                     d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
                   />
                 </svg>
-                <span className="absolute -top-1 -right-1 bg-purple-700 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  0
-                </span>
-              </button>
+                {cartCourses.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-purple-700 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartCourses.length}
+                  </span>
+                )}
+              </Link>
 
               <div className="relative dropdown">
                 <button
@@ -251,30 +263,34 @@ export default function Header() {
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
                     <Link
                       to="/profileuser"
-                      className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                      className="block px-4 py-2 text-gray-800 hover:bg-purple-50 hover:text-purple-700 flex items-center transition-colors duration-200 group"
                       onClick={() => setShowProfileMenu(false)}
                     >
-                      Hồ sơ của tôi
+                      <FaUser className="mr-2 text-gray-500 group-hover:text-purple-700 transition-colors duration-200" />
+                      <span className="transition-colors duration-200 group-hover:font-semibold">Hồ sơ của tôi</span>
                     </Link>
                     <Link
                       to="/token"
-                      className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                      className="block px-4 py-2 text-gray-800 hover:bg-purple-50 hover:text-purple-700 flex items-center transition-colors duration-200 group"
                       onClick={() => setShowProfileMenu(false)}
                     >
-                      API Token
+                      <FaKey className="mr-2 text-gray-500 group-hover:text-purple-700 transition-colors duration-200" />
+                      <span className="transition-colors duration-200 group-hover:font-semibold">API Token</span>
                     </Link>
                     <Link
                       to="/admin"
-                      className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                      className="block px-4 py-2 text-gray-800 hover:bg-purple-50 hover:text-purple-700 flex items-center transition-colors duration-200 group"
                       onClick={() => setShowProfileMenu(false)}
                     >
-                      Dashboard
+                      <FaTachometerAlt className="mr-2 text-gray-500 group-hover:text-purple-700 transition-colors duration-200" />
+                      <span className="transition-colors duration-200 group-hover:font-semibold">Dashboard</span>
                     </Link>
                     <button
                       onClick={handleSignOut}
-                      className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100"
+                      className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-purple-50 hover:text-purple-700 flex items-center transition-colors duration-200 group"
                     >
-                      Đăng xuất
+                      <FaSignOutAlt className="mr-2 text-gray-500 group-hover:text-purple-700 transition-colors duration-200" />
+                      <span className="transition-colors duration-200 group-hover:font-semibold">Đăng xuất</span>
                     </button>
                   </div>
                 )}
