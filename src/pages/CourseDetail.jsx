@@ -419,7 +419,7 @@ const CourseDetail = () => {
   useEffect(() => {
     const fetchCourseDetail = async () => {
       try {
-        setLoading(true);
+    setLoading(true);
         const response = await axios.get(`https://localhost:7261/api/courses/${courseId}`);
         const courseData = {
           id: parseInt(courseId),
@@ -461,7 +461,7 @@ const CourseDetail = () => {
         setError('Failed to fetch course details');
         console.error('Error fetching course details:', err);
       } finally {
-        setLoading(false);
+      setLoading(false);
       }
     };
 

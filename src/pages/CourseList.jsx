@@ -52,8 +52,8 @@ const CourseList = () => {
       try {
         setLoading(true);
         const response = await axios.get('https://localhost:7261/api/courses');
-        const mappedCourses = response.data.map((course, index) => ({
-          id: index + 1,
+        const mappedCourses = response.data.map(course => ({
+          id: course.id,
           title: course.name,
           price: course.price,
           description: course.description,
@@ -177,26 +177,26 @@ const CourseList = () => {
           </button>
         </div>
       ) : (
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <button onClick={() => setShowFilter(v => !v)} className="border px-4 py-2 rounded-md font-semibold bg-white shadow hover:bg-gray-50">
-              <i className="fas fa-filter mr-2"></i> Bộ lọc
-            </button>
-            <span className="text-gray-500 text-sm">{filteredCourses.length} kết quả</span>
-          </div>
-          <div>
-            <label className="mr-2 font-medium">Sắp xếp theo</label>
-            <select
-              className="border px-3 py-2 rounded-md"
-              value={sortOption}
-              onChange={e => setSortOption(e.target.value)}
-            >
-              {SORT_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowFilter(v => !v)} className="border px-4 py-2 rounded-md font-semibold bg-white shadow hover:bg-gray-50">
+            <i className="fas fa-filter mr-2"></i> Bộ lọc
+          </button>
+          <span className="text-gray-500 text-sm">{filteredCourses.length} kết quả</span>
         </div>
+        <div>
+          <label className="mr-2 font-medium">Sắp xếp theo</label>
+          <select
+            className="border px-3 py-2 rounded-md"
+            value={sortOption}
+            onChange={e => setSortOption(e.target.value)}
+          >
+            {SORT_OPTIONS.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
       )}
       <div className="flex gap-8">
         {/* Sidebar filter */}
