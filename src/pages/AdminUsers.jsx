@@ -110,7 +110,7 @@ const AdminUsers = () => {
               <thead>
                 <tr className="bg-gray-100">
                   <th className="px-4 py-2 text-left">Tên</th>
-                  <th className="px-4 py-2 text-center">Số khóa học</th>
+                  <th className="px-4 py-2 text-center">Khóa học đã đăng ký</th>
                   <th className="px-4 py-2 text-center">Ngày tham gia</th>
                   <th className="px-4 py-2 text-center">Hành động</th>
                 </tr>

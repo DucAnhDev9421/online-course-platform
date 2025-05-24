@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../assets/css/admin.css';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import axios from 'axios';
 
 const COURSE_LEVELS = [
   { value: '', label: 'Chọn trình độ' },
@@ -27,49 +28,8 @@ const TABS = [
 const AdminCourses = () => {
   const [tab, setTab] = useState('all');
   const [search, setSearch] = useState('');
-  const [courses, setCourses] = useState([
-    {
-      id: 1,
-      name: 'Revolutionize how you build the web...',
-      date: '2023-07-07',
-      instructor: 'Reva Yokk',
-      instructorAvatar: 'https://randomuser.me/api/portraits/women/1.jpg',
-      status: 'pending',
-      image: 'https://placehold.co/80x80/8b5cf6/fff?text=Gatsby',
-    },
-    {
-      id: 2,
-      name: 'Guide to Static Sites with Gatsby...',
-      date: '2023-07-06',
-      instructor: 'Brooklyn Simmons',
-      instructorAvatar: 'https://randomuser.me/api/portraits/women/2.jpg',
-      status: 'pending',
-      image: 'https://placehold.co/80x80/f472b6/fff?text=GraphQL',
-    },
-    {
-      id: 3,
-      name: 'The Modern JavaScript Courses ...',
-      date: '2023-07-05',
-      instructor: 'Miston Wilson',
-      instructorAvatar: 'https://randomuser.me/api/portraits/men/3.jpg',
-      status: 'pending',
-      image: 'https://placehold.co/80x80/f87171/fff?text=HTML5',
-    },
-    {
-      id: 4,
-      name: 'Courses JavaScript Heading Title ...',
-      date: '2023-07-05',
-      instructor: 'Guy Hawkins',
-      instructorAvatar: 'https://randomuser.me/api/portraits/men/4.jpg',
-      status: 'approved',
-      image: 'https://placehold.co/80x80/facc15/fff?text=JS',
-    },
-  ]);
-  const [categories] = useState([
-    { id: 1, name: 'Lập trình', description: 'Các khóa học về lập trình' },
-    { id: 2, name: 'Thiết kế', description: 'Các khóa học về thiết kế' },
-    { id: 3, name: 'Kinh doanh', description: 'Các khóa học về kinh doanh' },
-  ]);
+  const [courses, setCourses] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [step, setStep] = useState(0);
   const [courseTitle, setCourseTitle] = useState('');
@@ -98,46 +58,171 @@ const AdminCourses = () => {
   const [editingSectionTitle, setEditingSectionTitle] = useState('');
   const [newLectureTitle, setNewLectureTitle] = useState({});
   const [editingLecture, setEditingLecture] = useState({ id: null, sectionId: null, title: '' });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
 
-  const handleAddCourse = (e) => {
+  // Thêm useEffect để lấy danh sách danh mục khi component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setIsLoadingCategories(true);
+      try {
+        const response = await axios.get('https://localhost:7261/api/categories');
+        if (response.data) {
+          setCategories(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        setMessage('Có lỗi xảy ra khi tải danh mục!');
+        setMessageType('error');
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // Thêm useEffect để lấy danh sách khóa học khi component mount
+  useEffect(() => {
+    const fetchCourses = async () => {
+      setIsLoading(true);
+      try {
+        const response = await axios.get('https://localhost:7261/api/courses');
+        if (response.data) {
+          // Chuyển đổi dữ liệu từ API sang định dạng phù hợp với UI
+          const formattedCourses = response.data.map(course => ({
+            id: course.id,
+            name: course.name,
+            date: new Date().toISOString().split('T')[0], // Tạm thời dùng ngày hiện tại
+            instructor: 'Chưa có giảng viên', // Tạm thời
+            instructorAvatar: 'https://randomuser.me/api/portraits/men/1.jpg', // Tạm thời
+            status: course.status === 0 ? 'pending' : course.status === 1 ? 'approved' : 'rejected',
+            statusText: course.statusText,
+            level: course.level,
+            levelText: course.levelText,
+            categoryId: course.categoryId,
+            categoryName: course.categoryName,
+            price: course.price,
+            description: course.description,
+            image: course.imageUrl || 'https://placehold.co/80x80/8b5cf6/fff?text=Course',
+          }));
+          setCourses(formattedCourses);
+        }
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+        setMessage('Có lỗi xảy ra khi tải danh sách khóa học!');
+        setMessageType('error');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
+
+  const handleAddCourse = async (e) => {
     e.preventDefault();
     if (!courseTitle.trim() || !courseCategory) {
       setMessage('Vui lòng nhập đầy đủ thông tin khóa học!');
       setMessageType('error');
       return;
     }
-    setCourses([
-      ...courses,
-      {
-        id: Date.now(),
+
+    try {
+      // Chuyển đổi level từ string sang number
+      const levelMap = {
+        'beginner': 0,
+        'intermediate': 1,
+        'advanced': 2
+      };
+
+      // Chuẩn bị dữ liệu gửi lên API
+      const courseData = {
         name: courseTitle,
+        price: Number(coursePrice) || 0,
         description: courseDesc,
+        imageUrl: courseImage,
+        status: 0, // pending
+        level: levelMap[courseLevel] || 0,
         categoryId: Number(courseCategory),
-        level: courseLevel,
-        status: 'pending',
-        video: courseVideo,
-        image: courseImage,
-        price: coursePrice,
-      },
-    ]);
-    setMessage('Thêm khóa học thành công!');
-    setMessageType('success');
-    setCourseTitle('');
-    setCourseDesc('');
-    setCourseCategory('');
-    setCourseLevel('');
-    setCourseVideo('');
-    setCourseImage('');
-    setCoursePrice('');
-    setShowAddForm(false);
-    setStep(0);
+        sections: sections.map(section => ({
+          title: section.title,
+          lessons: section.lectures.map(lecture => ({
+            title: lecture.title,
+            type: lecture.contentType === 'video' ? 0 : 
+                  lecture.contentType === 'mixed' ? 1 : 2,
+            content: lecture.contentType === 'video' ? lecture.videoUrl : ''
+          }))
+        }))
+      };
+
+      // Gọi API tạo khóa học
+      const response = await axios.post('https://localhost:7261/api/courses', courseData);
+
+      if (response.data) {
+        // Thêm khóa học mới vào danh sách
+        const newCourse = {
+          id: response.data.id,
+          name: response.data.name,
+          date: new Date().toISOString().split('T')[0],
+          instructor: 'Chưa có giảng viên',
+          instructorAvatar: 'https://randomuser.me/api/portraits/men/1.jpg',
+          status: 'pending',
+          statusText: 'Pending',
+          level: response.data.level,
+          levelText: response.data.levelText,
+          categoryId: response.data.categoryId,
+          categoryName: response.data.categoryName,
+          price: response.data.price,
+          description: response.data.description,
+          image: response.data.imageUrl || 'https://placehold.co/80x80/8b5cf6/fff?text=Course',
+        };
+        setCourses([...courses, newCourse]);
+
+        setMessage('Thêm khóa học thành công!');
+        setMessageType('success');
+        
+        // Reset form
+        setCourseTitle('');
+        setCourseDesc('');
+        setCourseCategory('');
+        setCourseLevel('');
+        setCourseVideo('');
+        setCourseImage('');
+        setCoursePrice('');
+        setSections([{
+          id: Date.now(),
+          title: 'Chương 1: Giới thiệu',
+          lectures: [
+            { id: Date.now() + 1, title: 'Giới thiệu khóa học' },
+            { id: Date.now() + 2, title: 'Cài đặt phần mềm' },
+          ],
+        }]);
+        setShowAddForm(false);
+        setStep(0);
+      }
+    } catch (error) {
+      console.error('Error adding course:', error);
+      setMessage('Có lỗi xảy ra khi thêm khóa học!');
+      setMessageType('error');
+    }
+
     setTimeout(() => setMessage(''), 2000);
   };
 
-  const handleDeleteCourse = (id) => {
-    setCourses(courses.filter((c) => c.id !== id));
-    setMessage('Đã xóa khóa học!');
-    setMessageType('success');
+  const handleDeleteCourse = async (id) => {
+    try {
+      const response = await axios.delete(`https://localhost:7261/api/courses/${id}`);
+      if (response.status === 200) {
+        setCourses(courses.filter((c) => c.id !== id));
+        setMessage('Đã xóa khóa học!');
+        setMessageType('success');
+      }
+    } catch (error) {
+      console.error('Error deleting course:', error);
+      setMessage('Có lỗi xảy ra khi xóa khóa học!');
+      setMessageType('error');
+    }
     setTimeout(() => setMessage(''), 2000);
   };
 
@@ -146,14 +231,35 @@ const AdminCourses = () => {
     console.log('Edit course:', course);
   };
 
-  const handleStatusChange = (courseId, newStatus) => {
-    setCourses(courses.map(course => 
-      course.id === courseId 
-        ? { ...course, status: newStatus }
-        : course
-    ));
-    setMessage(`Đã cập nhật trạng thái khóa học!`);
-    setMessageType('success');
+  const handleStatusChange = async (courseId, newStatus) => {
+    try {
+      const statusMap = {
+        'pending': 0,
+        'approved': 1,
+        'rejected': 2
+      };
+      await axios.patch(
+        `https://localhost:7261/api/courses/${courseId}/status`,
+        statusMap[newStatus],
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+      setCourses(courses.map(course => 
+        course.id === courseId 
+          ? { 
+              ...course, 
+              status: newStatus,
+              statusText: newStatus === 'pending' ? 'Pending' : 
+                         newStatus === 'approved' ? 'Approved' : 'Rejected'
+            }
+          : course
+      ));
+      setMessage(`Đã cập nhật trạng thái khóa học!`);
+      setMessageType('success');
+    } catch (error) {
+      console.error('Error updating course status:', error);
+      setMessage('Có lỗi xảy ra khi cập nhật trạng thái khóa học!');
+      setMessageType('error');
+    }
     setTimeout(() => setMessage(''), 2000);
   };
 
@@ -307,7 +413,7 @@ const AdminCourses = () => {
                         <div className="flex gap-2">
                           {editingSectionId === section.id ? (
                             <>
-                              <button type="button" onClick={() => handleSaveEditSection(section.id)} className="text-green-600"><i className="fas fa-check"></i></button>
+                              <button type="button" onClick={handleSaveEditSection} className="text-green-600"><i className="fas fa-check"></i></button>
                               <button type="button" onClick={() => setEditingSectionId(null)} className="text-gray-500"><i className="fas fa-times"></i></button>
                             </>
                           ) : (
@@ -445,81 +551,162 @@ const AdminCourses = () => {
 
   // Thêm Section
   const handleAddSection = () => {
-    if (!newSectionTitle.trim()) return;
-    setSections([
-      ...sections,
-      { id: Date.now(), title: newSectionTitle, lectures: [] },
-    ]);
+    if (!newSectionTitle.trim()) {
+      setMessage('Vui lòng nhập tên chương!');
+      setMessageType('error');
+      return;
+    }
+
+    const newSection = {
+      id: Date.now(),
+      title: newSectionTitle,
+      lectures: []
+    };
+
+    setSections([...sections, newSection]);
     setNewSectionTitle('');
+    setMessage('Đã thêm chương mới!');
+    setMessageType('success');
+    setTimeout(() => setMessage(''), 2000);
   };
+
+  // Thêm Lecture
+  const handleAddLecture = (sectionId) => {
+    if (!newLectureTitle[sectionId] || !newLectureTitle[sectionId].trim()) {
+      setMessage('Vui lòng nhập tên bài học!');
+      setMessageType('error');
+      return;
+    }
+
+    const newLecture = {
+      id: Date.now(),
+      title: newLectureTitle[sectionId],
+      contentType: '',
+      videoUrl: ''
+    };
+
+    setSections(sections.map(section => 
+      section.id === sectionId
+        ? { ...section, lectures: [...section.lectures, newLecture] }
+        : section
+    ));
+
+    setNewLectureTitle({ ...newLectureTitle, [sectionId]: '' });
+    setMessage('Đã thêm bài học mới!');
+    setMessageType('success');
+    setTimeout(() => setMessage(''), 2000);
+  };
+
   // Sửa Section
   const handleEditSection = (id, title) => {
     setEditingSectionId(id);
     setEditingSectionTitle(title);
   };
-  const handleSaveEditSection = (id) => {
-    setSections(sections.map(s => s.id === id ? { ...s, title: editingSectionTitle } : s));
+
+  const handleSaveEditSection = () => {
+    if (!editingSectionTitle.trim()) {
+      setMessage('Vui lòng nhập tên chương!');
+      setMessageType('error');
+      return;
+    }
+
+    setSections(sections.map(section =>
+      section.id === editingSectionId
+        ? { ...section, title: editingSectionTitle }
+        : section
+    ));
+
     setEditingSectionId(null);
     setEditingSectionTitle('');
+    setMessage('Đã cập nhật tên chương!');
+    setMessageType('success');
+    setTimeout(() => setMessage(''), 2000);
   };
+
   const handleDeleteSection = (id) => {
-    setSections(sections.filter(s => s.id !== id));
+    setSections(sections.filter(section => section.id !== id));
+    setMessage('Đã xóa chương!');
+    setMessageType('success');
+    setTimeout(() => setMessage(''), 2000);
   };
-  // Thêm Lecture
-  const handleAddLecture = (sectionId) => {
-    if (!newLectureTitle[sectionId] || !newLectureTitle[sectionId].trim()) return;
-    setSections(sections.map(s =>
-      s.id === sectionId
-        ? { ...s, lectures: [...s.lectures, { id: Date.now(), title: newLectureTitle[section.id], contentType: '', videoUrl: '' }] }
-        : s
-    ));
-    setNewLectureTitle({ ...newLectureTitle, [sectionId]: '' });
-  };
+
   // Sửa Lecture
   const handleEditLecture = (sectionId, lecture) => {
     setEditingLecture({ id: lecture.id, sectionId, title: lecture.title });
   };
+
   const handleSaveEditLecture = () => {
-    setSections(sections.map(s =>
-      s.id === editingLecture.sectionId
-        ? { ...s, lectures: s.lectures.map(l => l.id === editingLecture.id ? { ...l, title: editingLecture.title } : l) }
-        : s
+    if (!editingLecture.title.trim()) {
+      setMessage('Vui lòng nhập tên bài học!');
+      setMessageType('error');
+      return;
+    }
+
+    setSections(sections.map(section =>
+      section.id === editingLecture.sectionId
+        ? {
+            ...section,
+            lectures: section.lectures.map(lecture =>
+              lecture.id === editingLecture.id
+                ? { ...lecture, title: editingLecture.title }
+                : lecture
+            )
+          }
+        : section
     ));
+
     setEditingLecture({ id: null, sectionId: null, title: '' });
+    setMessage('Đã cập nhật tên bài học!');
+    setMessageType('success');
+    setTimeout(() => setMessage(''), 2000);
   };
+
   const handleDeleteLecture = (sectionId, lectureId) => {
-    setSections(sections.map(s =>
-      s.id === sectionId
-        ? { ...s, lectures: s.lectures.filter(l => l.id !== lectureId) }
-        : s
+    setSections(sections.map(section =>
+      section.id === sectionId
+        ? {
+            ...section,
+            lectures: section.lectures.filter(lecture => lecture.id !== lectureId)
+          }
+        : section
     ));
+    setMessage('Đã xóa bài học!');
+    setMessageType('success');
+    setTimeout(() => setMessage(''), 2000);
   };
+
   // Thay đổi loại nội dung bài học
   const handleChangeLectureContentType = (sectionId, lectureId, contentType) => {
-    setSections(sections.map(s =>
-      s.id === sectionId
+    setSections(sections.map(section =>
+      section.id === sectionId
         ? {
-            ...s,
-            lectures: s.lectures.map(l =>
-              l.id === lectureId ? { ...l, contentType } : l
+            ...section,
+            lectures: section.lectures.map(lecture =>
+              lecture.id === lectureId
+                ? { ...lecture, contentType }
+                : lecture
             )
           }
-        : s
+        : section
     ));
   };
+
   // Thay đổi URL video bài học
   const handleChangeLectureVideoUrl = (sectionId, lectureId, videoUrl) => {
-    setSections(sections.map(s =>
-      s.id === sectionId
+    setSections(sections.map(section =>
+      section.id === sectionId
         ? {
-            ...s,
-            lectures: s.lectures.map(l =>
-              l.id === lectureId ? { ...l, videoUrl } : l
+            ...section,
+            lectures: section.lectures.map(lecture =>
+              lecture.id === lectureId
+                ? { ...lecture, videoUrl }
+                : lecture
             )
           }
-        : s
+        : section
     ));
   };
+
   // Kéo thả Section và Lecture
   const onDragEnd = (result) => {
     if (!result.destination) return;
@@ -599,48 +786,78 @@ const AdminCourses = () => {
           </div>
           {/* Table */}
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-white">
-              <thead>
-                <tr className="text-left text-gray-700 text-sm">
-                  <th className="py-2 px-4">Khóa học</th>
-                  <th className="py-2 px-4">Giảng viên</th>
-                  <th className="py-2 px-4">Trạng thái</th>
-                  <th className="py-2 px-4">Hành động</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredCourses.length === 0 ? (
-                  <tr><td colSpan={4} className="text-center py-8 text-gray-400">Không có khóa học nào</td></tr>
-                ) : filteredCourses.map(course => (
-                  <tr key={course.id} className="border-t hover:bg-gray-50">
-                    <td className="py-3 px-4">
-                      <div className="flex items-center space-x-3">
-                        <img src={course.image} alt="thumb" className="w-14 h-14 rounded-lg object-cover" />
-                        <div>
-                          <div className="font-semibold text-gray-900 truncate max-w-xs">{course.name}</div>
-                          <div className="text-xs text-gray-500">Thêm ngày {new Date(course.date).toLocaleDateString('vi-VN')}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 align-top">
-                      <span>{course.instructor}</span>
-                    </td>
-                    <td className="py-3 px-4 align-top">{getStatusBadge(course.status)}</td>
-                    <td className="py-3 px-4 align-top space-x-2">
-                      {course.status === 'pending' && (
-                        <>
-                          <button onClick={() => handleStatusChange(course.id, 'rejected')} className="border px-3 py-1 rounded text-gray-700 hover:bg-gray-100">Từ chối</button>
-                          <button onClick={() => handleStatusChange(course.id, 'approved')} className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">Duyệt</button>
-                        </>
-                      )}
-                      {course.status === 'approved' && (
-                        <button onClick={() => handleStatusChange(course.id, 'pending')} className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600">Đổi trạng thái</button>
-                      )}
-                    </td>
+            {isLoading ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                <span className="ml-2 text-gray-600">Đang tải dữ liệu...</span>
+              </div>
+            ) : (
+              <table className="min-w-full bg-white">
+                <thead>
+                  <tr className="text-left text-gray-700 text-sm">
+                    <th className="py-2 px-4">Khóa học</th>
+                    <th className="py-2 px-4">Giảng viên</th>
+                    <th className="py-2 px-4">Trạng thái</th>
+                    <th className="py-2 px-4">Hành động</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredCourses.length === 0 ? (
+                    <tr><td colSpan={4} className="text-center py-8 text-gray-400">Không có khóa học nào</td></tr>
+                  ) : filteredCourses.map(course => (
+                    <tr key={course.id} className="border-t hover:bg-gray-50">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center space-x-3">
+                          <img src={course.image} alt="thumb" className="w-14 h-14 rounded-lg object-cover" />
+                          <div>
+                            <div className="font-semibold text-gray-900 truncate max-w-xs">{course.name}</div>
+                            <div className="text-xs text-gray-500">Thêm ngày {course.date}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 align-top">
+                        <span>{course.instructor}</span>
+                      </td>
+                      <td className="py-3 px-4 align-top">{getStatusBadge(course.status)}</td>
+                      <td className="py-3 px-4 align-top space-x-2">
+                        {course.status === 'pending' && (
+                          <>
+                            <button 
+                              onClick={() => handleStatusChange(course.id, 'rejected')} 
+                              className="border px-3 py-1 rounded text-gray-700 hover:bg-gray-100"
+                            >
+                              Từ chối
+                            </button>
+                            <button 
+                              onClick={() => handleStatusChange(course.id, 'approved')} 
+                              className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                            >
+                              Duyệt
+                            </button>
+                          </>
+                        )}
+                        {course.status === 'approved' && (
+                          <button 
+                            onClick={() => handleStatusChange(course.id, 'pending')} 
+                            className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600"
+                          >
+                            Đổi trạng thái
+                          </button>
+                        )}
+                        {course.status === 'rejected' && (
+                          <button 
+                            onClick={() => handleStatusChange(course.id, 'pending')} 
+                            className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600"
+                          >
+                            Đổi trạng thái
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       )}
