@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const LEVELS = [
   { value: 'beginner', label: 'Sơ cấp' },
@@ -21,34 +22,12 @@ const SORT_OPTIONS = [
   { value: 'price-desc', label: 'Giá giảm dần' },
 ];
 
+
 const CourseList = () => {
   const navigate = useNavigate();
-  const [courses, setCourses] = useState([
-    { 
-      id: 1, 
-      title: 'React Fundamentals', 
-      category: 'Frontend', 
-      price: 100000, 
-      rating: 4.5, 
-      students: 1200, 
-      image: 'https://almablog-media.s3.ap-south-1.amazonaws.com/medium_React_Fundamentals_56e32fd939.png', 
-      level: 'beginner', 
-      duration: 12 
-    },
-    { 
-      id: 2, 
-      title: 'Node.js Advanced', 
-      category: 'Backend', 
-      price: 100000, 
-      rating: 4.7, 
-      students: 850, 
-      image: 'https://user-images.githubusercontent.com/42917814/172293103-e98aaf19-d5c0-4e4e-8046-a8cb41a2ff50.png', 
-      level: 'expert', 
-      duration: 22 
-    },
-
-  
-  ]);
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Filter states
   const [showFilter, setShowFilter] = useState(true);
@@ -67,6 +46,35 @@ const CourseList = () => {
 
   // Get unique categories
   const categories = ['All', ...new Set(courses.map(course => course.category))];
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get('https://localhost:7261/api/courses');
+        const mappedCourses = response.data.map((course, index) => ({
+          id: index + 1,
+          title: course.name,
+          price: course.price,
+          description: course.description,
+          level: course.levelText.toLowerCase(),
+          category: course.categoryName,
+          rating: 4.5, // Default value since not provided by API
+          students: 0, // Default value since not provided by API
+          image: 'https://almablog-media.s3.ap-south-1.amazonaws.com/medium_React_Fundamentals_56e32fd939.png', // Default image
+          duration: 10 // Default value since not provided by API
+        }));
+        setCourses(mappedCourses);
+      } catch (err) {
+        setError('Failed to fetch courses');
+        console.error('Error fetching courses:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
 
   // Filter logic
   let filteredCourses = courses.filter(course => {
@@ -153,26 +161,43 @@ const CourseList = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <button onClick={() => setShowFilter(v => !v)} className="border px-4 py-2 rounded-md font-semibold bg-white shadow hover:bg-gray-50">
-            <i className="fas fa-filter mr-2"></i> Bộ lọc
-          </button>
-          <span className="text-gray-500 text-sm">{filteredCourses.length} kết quả</span>
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Đang tải danh sách khóa học...</p>
         </div>
-        <div>
-          <label className="mr-2 font-medium">Sắp xếp theo</label>
-          <select
-            className="border px-3 py-2 rounded-md"
-            value={sortOption}
-            onChange={e => setSortOption(e.target.value)}
+      ) : error ? (
+        <div className="text-center py-12 text-red-600">
+          <p>{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
-            {SORT_OPTIONS.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
+            Thử lại
+          </button>
         </div>
-      </div>
+      ) : (
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowFilter(v => !v)} className="border px-4 py-2 rounded-md font-semibold bg-white shadow hover:bg-gray-50">
+              <i className="fas fa-filter mr-2"></i> Bộ lọc
+            </button>
+            <span className="text-gray-500 text-sm">{filteredCourses.length} kết quả</span>
+          </div>
+          <div>
+            <label className="mr-2 font-medium">Sắp xếp theo</label>
+            <select
+              className="border px-3 py-2 rounded-md"
+              value={sortOption}
+              onChange={e => setSortOption(e.target.value)}
+            >
+              {SORT_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
       <div className="flex gap-8">
         {/* Sidebar filter */}
         {showFilter && (

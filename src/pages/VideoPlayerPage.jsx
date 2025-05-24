@@ -3,56 +3,73 @@ import { useParams, useNavigate } from 'react-router-dom';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import ReactPlayer from 'react-player';
+import axios from 'axios';
 
 const VideoPlayerPage = () => {
   const { courseId, lessonId } = useParams();
   const navigate = useNavigate();
   const [currentLesson, setCurrentLesson] = useState(null);
-  // Dữ liệu mẫu cho chương và bài học
-  const sampleSections = [
-    {
-      id: 1,
-      title: 'Chương 1: Giới thiệu',
-      lessons: [
-        { id: 1, title: 'Giới thiệu về React', duration: '15:30', videoUrl: 'https://example.com/video1.mp4', completed: true },
-        { id: 2, title: 'Cài đặt môi trường', duration: '20:15', videoUrl: 'https://example.com/video2.mp4', completed: false },
-      ],
-    },
-    {
-      id: 2,
-      title: 'Chương 2: Cơ bản về React',
-      lessons: [
-        { id: 3, title: 'Components và Props', duration: '25:45', videoUrl: 'https://example.com/video3.mp4', completed: false },
-        { id: 4, title: 'State và Lifecycle', duration: '18:20', videoUrl: 'https://example.com/video4.mp4', completed: false },
-      ],
-    },
-  ];
-  const [sections, setSections] = useState(sampleSections);
+  const [sections, setSections] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [notes, setNotes] = useState('');
   const [editingNoteId, setEditingNoteId] = useState(null);
   const [savedNotes, setSavedNotes] = useState([]);
   const [progress, setProgress] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('notes');
-  const [openSectionIds, setOpenSectionIds] = useState([sampleSections[0].id]);
+  const [openSectionIds, setOpenSectionIds] = useState([]);
   const [reviewInput, setReviewInput] = useState({ rating: 5, comment: '' });
-  const [reviews, setReviews] = useState([
-    // ... existing code hoặc dữ liệu mẫu ...
-  ]);
+  const [reviews, setReviews] = useState([]);
 
-  // Tìm bài học hiện tại
+  // Fetch course sections and lessons
   useEffect(() => {
-    let foundLesson = null;
-    for (const section of sections) {
-      const lesson = section.lessons.find(l => l.id === parseInt(lessonId));
-      if (lesson) {
-        // Demo: override videoUrl thành link YouTube
-        foundLesson = { ...lesson, videoUrl: 'https://youtu.be/x0fSBAgBrOQ?list=PL_-VfJajZj0UXjlKfBwFX73usByw3Ph9Q' };
-        setCurrentLesson(foundLesson);
-        break;
+    const fetchCourseDetails = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`https://localhost:7261/api/courses/${courseId}`);
+        const courseSections = response.data.sections.map(section => ({
+          id: section.id,
+          title: section.title,
+          lessons: section.lessons.map(lesson => ({
+            id: lesson.id,
+            title: lesson.title,
+            type: lesson.type,
+            content: lesson.content,
+            duration: '00:00', // Default duration since not provided by API
+            completed: false, // Default completion status
+            videoUrl: 'https://youtu.be/x0fSBAgBrOQ?list=PL_-VfJajZj0UXjlKfBwFX73usByw3Ph9Q' // Default video URL
+          }))
+        }));
+        
+        setSections(courseSections);
+        setOpenSectionIds([courseSections[0]?.id]); // Open first section by default
+
+        // Find and set current lesson
+        if (lessonId) {
+          for (const section of courseSections) {
+            const lesson = section.lessons.find(l => l.id === parseInt(lessonId));
+            if (lesson) {
+              setCurrentLesson(lesson);
+              break;
+            }
+          }
+        } else if (courseSections[0]?.lessons[0]) {
+          // If no lessonId provided, set first lesson as current
+          setCurrentLesson(courseSections[0].lessons[0]);
+          navigate(`/courses/${courseId}/lessons/${courseSections[0].lessons[0].id}`);
+        }
+
+      } catch (err) {
+        setError('Failed to fetch course details');
+        console.error('Error fetching course details:', err);
+      } finally {
+        setLoading(false);
       }
-    }
-  }, [lessonId, sections]);
+    };
+
+    fetchCourseDetails();
+  }, [courseId, lessonId, navigate]);
 
   // Cập nhật tiến độ khi sections thay đổi
   useEffect(() => {

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const CourseDetail = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [reviews, setReviews] = useState([]);
@@ -415,21 +417,55 @@ const CourseDetail = () => {
   ];
 
   useEffect(() => {
-    // Giả lập việc gọi API để lấy dữ liệu khóa học
-    setLoading(true);
-    
-    // Tìm khóa học theo id
-    const foundCourse = coursesData.find(c => c.id === parseInt(courseId));
-    
-    // Giả lập độ trễ khi gọi API
-    setTimeout(() => {
-      if (foundCourse) {
-        setCourse(foundCourse);
-        setReviews(sampleReviews);
-        setSections(sampleSections);
+    const fetchCourseDetail = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`https://localhost:7261/api/courses/${courseId}`);
+        const courseData = {
+          id: parseInt(courseId),
+          title: response.data.name,
+          price: response.data.price,
+          description: response.data.description,
+          rating: 4.5, // Default value
+          students: 1200, // Default value
+          image: 'https://almablog-media.s3.ap-south-1.amazonaws.com/medium_React_Fundamentals_56e32fd939.png', // Default image
+          instructor: 'AI Coding', // Default value
+          topics: [
+            'Giới thiệu về JSX và Components',
+            'Hiểu về Props và State',
+            'React Hooks (useState, useEffect, useContext)',
+            'Xử lý Forms trong React',
+            'Routing với React Router',
+            'State Management với Context API và Redux',
+            'Tối ưu hiệu suất React'
+          ], // Default topics
+          duration: '12 giờ', // Default value
+          level: 'Trung cấp', // Default value
+          lastUpdated: new Date().toISOString(),
+          lessons: [
+            { 
+              id: 1, 
+              title: 'Giới thiệu về React', 
+              duration: '15:30', 
+              completed: false,
+              description: 'Trong bài học này, bạn sẽ được tìm hiểu về React.',
+              resources: [],
+              videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+            }
+          ] // Default lessons
+        };
+        setCourse(courseData);
+        setReviews([]); // Reset reviews
+        setSections([]); // Reset sections
+      } catch (err) {
+        setError('Failed to fetch course details');
+        console.error('Error fetching course details:', err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }, 500);
+    };
+
+    fetchCourseDetail();
   }, [courseId]);
 
   // Kiểm tra và cập nhật trạng thái yêu thích
