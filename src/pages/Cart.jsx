@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '@clerk/clerk-react';
+import { toast } from 'react-toastify';
 
 export default function Cart() {
   const [cartCourses, setCartCourses] = useState([]);
@@ -54,8 +55,9 @@ export default function Cart() {
         }
       });
       setCartCourses(cartCourses.filter(item => item.courseId !== courseId));
+      toast.success('Đã xóa khóa học khỏi giỏ hàng!');
     } catch (error) {
-      alert('Lỗi khi xóa khóa học khỏi giỏ hàng!');
+      toast.error('Lỗi khi xóa khóa học khỏi giỏ hàng!');
       console.error(error);
     }
   };
@@ -71,8 +73,9 @@ export default function Cart() {
         }
       });
       setCartCourses([]);
+      toast.success('Đã xóa toàn bộ giỏ hàng!');
     } catch (error) {
-      alert('Lỗi khi xóa toàn bộ giỏ hàng!');
+      toast.error('Lỗi khi xóa toàn bộ giỏ hàng!');
       console.error(error);
     }
   };

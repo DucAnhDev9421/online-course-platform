@@ -21,6 +21,8 @@ import NotFound from './pages/NotFound';
 import TokenPage from './pages/TokenPage';
 import Favorites from './pages/Favorites';
 import Cart from './pages/Cart';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -97,6 +99,7 @@ function AppLayout() {
         </Routes>
       </main>
       {!isAuthPage && !isVideoPlayerPage && !isAdminPage && !isTeachingPage && !isNotFoundPage && <Footer />}
+      <ToastContainer position="top-right" autoClose={2000} />
     </div>
   );
 }
