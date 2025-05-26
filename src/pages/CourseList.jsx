@@ -61,7 +61,7 @@ const CourseList = () => {
           category: course.categoryName,
           rating: 4.5, // Default value since not provided by API
           students: 0, // Default value since not provided by API
-          image: 'https://almablog-media.s3.ap-south-1.amazonaws.com/medium_React_Fundamentals_56e32fd939.png', // Default image
+          image: course.imageUrl || 'https://almablog-media.s3.ap-south-1.amazonaws.com/medium_React_Fundamentals_56e32fd939.png', // Use imageUrl from API
           duration: 10 // Default value since not provided by API
         }));
         setCourses(mappedCourses);

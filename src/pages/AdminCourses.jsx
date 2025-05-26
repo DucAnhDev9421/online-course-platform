@@ -105,6 +105,7 @@ const AdminCourses = () => {
             price: course.price,
             description: course.description,
             image: course.imageUrl || 'https://placehold.co/80x80/8b5cf6/fff?text=Course',
+            videoDemoUrl: course.videoDemoUrl || '', // Add videoDemoUrl
           }));
           setCourses(formattedCourses);
         }
@@ -131,9 +132,9 @@ const AdminCourses = () => {
     try {
       // Chuyển đổi level từ string sang number
       const levelMap = {
-        'beginner': 0,
-        'intermediate': 1,
-        'advanced': 2
+        'beginner': 1,
+        'intermediate': 2,
+        'advanced': 3
       };
 
       // Chuẩn bị dữ liệu gửi lên API
@@ -142,6 +143,7 @@ const AdminCourses = () => {
         price: Number(coursePrice) || 0,
         description: courseDesc,
         imageUrl: courseImage,
+        videoDemoUrl: courseVideo, // Add videoDemoUrl
         status: 0, // pending
         level: levelMap[courseLevel] || 0,
         categoryId: Number(courseCategory),
@@ -176,6 +178,7 @@ const AdminCourses = () => {
           price: response.data.price,
           description: response.data.description,
           image: response.data.imageUrl || 'https://placehold.co/80x80/8b5cf6/fff?text=Course',
+          videoDemoUrl: response.data.videoDemoUrl || '', // Add videoDemoUrl
         };
         setCourses([...courses, newCourse]);
 

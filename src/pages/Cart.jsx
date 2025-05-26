@@ -1,23 +1,80 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useAuth } from '@clerk/clerk-react';
 
 export default function Cart() {
   const [cartCourses, setCartCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { getToken } = useAuth();
 
   useEffect(() => {
-    const stored = localStorage.getItem('cartCourses');
-    setCartCourses(stored ? JSON.parse(stored) : []);
-  }, []);
+    const fetchCart = async () => {
+      setLoading(true);
+      try {
+        const token = await getToken();
+        if (!token) {
+          alert('Vui lòng đăng nhập để xem giỏ hàng');
+          navigate('/login');
+          return;
+        }
+        const response = await axios.get('https://localhost:7261/api/Cart', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        setCartCourses(response.data);
+      } catch (error) {
+        console.error('Lỗi lấy giỏ hàng:', error);
+        setCartCourses([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCart();
+  }, [getToken, navigate]);
 
-  const handleRemove = (id) => {
-    const updated = cartCourses.filter(c => c.id !== id);
-    setCartCourses(updated);
-    localStorage.setItem('cartCourses', JSON.stringify(updated));
+  if (loading) {
+    return <div>Đang tải giỏ hàng...</div>;
+  }
+
+  const handleGoToCourse = (courseId) => {
+    navigate(`/courses/${courseId}`);
   };
 
-  const handleGoToCourse = (id) => {
-    navigate(`/courses/${id}`);
+  const handleRemove = async (courseId) => {
+    try {
+      const token = await getToken();
+      await axios.delete(`https://localhost:7261/api/Cart/${courseId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      setCartCourses(cartCourses.filter(item => item.courseId !== courseId));
+    } catch (error) {
+      alert('Lỗi khi xóa khóa học khỏi giỏ hàng!');
+      console.error(error);
+    }
+  };
+
+  const handleClearCart = async () => {
+    if (!window.confirm('Bạn có chắc muốn xóa toàn bộ giỏ hàng?')) return;
+    try {
+      const token = await getToken();
+      await axios.delete('https://localhost:7261/api/Cart/all', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      setCartCourses([]);
+    } catch (error) {
+      alert('Lỗi khi xóa toàn bộ giỏ hàng!');
+      console.error(error);
+    }
   };
 
   return (
@@ -39,22 +96,23 @@ export default function Cart() {
               <Link to="/courses" className="text-purple-600 hover:underline text-sm">+ Thêm khóa học khác</Link>
             </div>
             <ul className="divide-y divide-gray-100">
-              {cartCourses.map(course => (
-                <li key={course.id} className="flex flex-col sm:flex-row items-center gap-4 py-6">
-                  <img src={course.thumbnail || '/default-course.png'} alt={course.title} className="w-28 h-20 object-cover rounded-lg shadow" />
+              {cartCourses.map(item => (
+                <li key={item.cartItemId} className="flex flex-col sm:flex-row items-center gap-4 py-6">
+                  <img src={item.course.imageUrl || '/default-course.png'} alt={item.course.name} className="w-28 h-20 object-cover rounded-lg shadow" />
                   <div className="flex-1 w-full">
-                    <div className="font-bold text-lg text-gray-800 cursor-pointer hover:text-purple-700 transition" onClick={() => handleGoToCourse(course.id)}>{course.title}</div>
-                    <div className="text-gray-500 text-sm mb-1">{course.category}</div>
+                    <div className="font-bold text-lg text-gray-800 cursor-pointer hover:text-purple-700 transition" onClick={() => handleGoToCourse(item.courseId)}>{item.course.name}</div>
+                    <div className="text-gray-500 text-sm mb-1">{item.course.category}</div>
                     <div className="text-purple-600 font-semibold text-base">
-                      {course.price === 0 ? 'Miễn phí' : course.price?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+                      {item.course.price === 0 ? 'Miễn phí' : item.course.price?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
                     </div>
                   </div>
-                  <button onClick={() => handleRemove(course.id)} className="ml-0 sm:ml-4 px-4 py-2 text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition font-semibold">Xóa</button>
+                  <button onClick={() => handleRemove(item.courseId)} className="ml-0 sm:ml-4 px-4 py-2 text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition font-semibold">Xóa</button>
                 </li>
               ))}
             </ul>
             <div className="mt-10 flex flex-col sm:flex-row justify-end gap-4">
               <button className="bg-purple-700 text-white px-8 py-3 rounded-lg font-bold text-lg shadow hover:bg-purple-800 transition">Thanh toán</button>
+              <button onClick={handleClearCart} className="bg-red-100 text-red-600 px-8 py-3 rounded-lg font-bold text-lg shadow hover:bg-red-200 transition border border-red-200">Xóa giỏ hàng</button>
             </div>
           </div>
         )}

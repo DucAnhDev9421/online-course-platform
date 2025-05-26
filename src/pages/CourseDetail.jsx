@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '@clerk/clerk-react';
 
 const CourseDetail = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
+  const { getToken } = useAuth();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -16,6 +18,7 @@ const CourseDetail = () => {
   const [showAllTopics, setShowAllTopics] = useState(false);
   const [sections, setSections] = useState([]);
   const [showAllSections, setShowAllSections] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   const totalLectures = sections.reduce((sum, s) => sum + s.lectures, 0);
   const totalDuration = sections.reduce((sum, s) => sum + s.duration, 0);
   const totalSections = sections.length;
@@ -452,7 +455,8 @@ const CourseDetail = () => {
               resources: [],
               videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
             }
-          ] // Default lessons
+          ], // Default lessons
+          videoDemoUrl: response.data.videoDemoUrl || 'https://www.youtube.com/embed/dQw4w9WgXcQ' // Add videoDemoUrl from API
         };
         setCourse(courseData);
         setReviews([]); // Reset reviews
@@ -588,6 +592,46 @@ const CourseDetail = () => {
     if (diff < 60 * 60 * 24 * 30) return `${Math.floor(diff / (60 * 60 * 24 * 7))} tuần trước`;
     return `${Math.floor(diff / (60 * 60 * 24 * 30))} tháng trước`;
   }
+
+  // Xử lý thêm vào giỏ hàng
+  const handleAddToCart = async () => {
+    try {
+      setIsAddingToCart(true);
+      const token = await getToken(); // Lấy token từ Clerk
+      if (!token) {
+        alert('Vui lòng đăng nhập để thêm khóa học vào giỏ hàng');
+        navigate('/login');
+        return;
+      }
+
+      const response = await axios.post('https://localhost:7261/api/Cart/add', 
+        {
+          courseId: course.id,
+          quantity: 1
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.status === 200) {
+        alert('Đã thêm khóa học vào giỏ hàng!');
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      if (error.response?.status === 401) {
+        alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        navigate('/login');
+      } else {
+        alert('Có lỗi xảy ra khi thêm vào giỏ hàng. Vui lòng thử lại sau.');
+      }
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -823,7 +867,7 @@ const CourseDetail = () => {
               <iframe
                 width="100%"
                 height="200"
-                src={course.videoUrl || "https://www.youtube.com/embed/dQw4w9WgXcQ"}
+                src={course.videoDemoUrl}
                 title="Giới thiệu khóa học"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -833,8 +877,20 @@ const CourseDetail = () => {
             </div>
             <div className="text-3xl font-bold text-gray-900 mb-4">{course.price ? course.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }) : 'Miễn phí'}</div>
             <div className="flex gap-2 mb-3">
-              <button className="flex-1 bg-purple-600 text-white py-3 rounded-md text-lg font-semibold hover:bg-purple-700">
-                Thêm vào giỏ hàng
+              <button 
+                className="flex-1 bg-purple-600 text-white py-3 rounded-md text-lg font-semibold hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed"
+                onClick={handleAddToCart}
+                disabled={isAddingToCart}
+              >
+                {isAddingToCart ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Đang thêm...
+                  </span>
+                ) : 'Thêm vào giỏ hàng'}
               </button>
               <button
                 onClick={handleToggleFavorite}
