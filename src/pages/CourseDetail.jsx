@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '@clerk/clerk-react';
+import { toast } from 'react-toastify';
 
 const CourseDetail = () => {
   const { courseId } = useParams();
@@ -489,6 +490,7 @@ const CourseDetail = () => {
       const updatedFavorites = favoriteCourses.filter(fc => fc.id !== course.id);
       localStorage.setItem('favoriteCourses', JSON.stringify(updatedFavorites));
       setIsFavorite(false);
+      toast.info('Đã bỏ khỏi danh sách yêu thích!');
     } else {
       // Thêm vào danh sách yêu thích
       const newFavorite = {
@@ -503,6 +505,7 @@ const CourseDetail = () => {
       favoriteCourses.push(newFavorite);
       localStorage.setItem('favoriteCourses', JSON.stringify(favoriteCourses));
       setIsFavorite(true);
+      toast.success('Đã thêm vào danh sách yêu thích!');
     }
   };
 
@@ -599,7 +602,7 @@ const CourseDetail = () => {
       setIsAddingToCart(true);
       const token = await getToken(); // Lấy token từ Clerk
       if (!token) {
-        alert('Vui lòng đăng nhập để thêm khóa học vào giỏ hàng');
+        toast.error('Vui lòng đăng nhập để thêm khóa học vào giỏ hàng');
         navigate('/login');
         return;
       }
@@ -618,15 +621,15 @@ const CourseDetail = () => {
       );
 
       if (response.status === 200) {
-        alert('Đã thêm khóa học vào giỏ hàng!');
+        toast.success('Đã thêm khóa học vào giỏ hàng!');
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
       if (error.response?.status === 401) {
-        alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
         navigate('/login');
       } else {
-        alert('Có lỗi xảy ra khi thêm vào giỏ hàng. Vui lòng thử lại sau.');
+        toast.error('Có lỗi xảy ra khi thêm vào giỏ hàng. Vui lòng thử lại sau.');
       }
     } finally {
       setIsAddingToCart(false);
