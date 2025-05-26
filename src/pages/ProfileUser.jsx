@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const ProfileUser = () => {
   const { user } = useUser();
@@ -59,7 +60,7 @@ const ProfileUser = () => {
     fileInputRef.current.click();
   };
 
-  const handleAvatarChange = (e) => {
+  const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
@@ -71,6 +72,16 @@ const ProfileUser = () => {
         }));
       };
       reader.readAsDataURL(file);
+      // Tích hợp cập nhật avatar Clerk
+      if (user) {
+        try {
+          await user.setProfileImage({ file });
+          toast.success('Ảnh đại diện đã được cập nhật!');
+        } catch (error) {
+          console.error('Lỗi cập nhật ảnh:', error);
+          toast.error('Không thể cập nhật ảnh đại diện.');
+        }
+      }
     }
   };
 
