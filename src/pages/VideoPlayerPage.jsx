@@ -47,17 +47,28 @@ const VideoPlayerPage = () => {
 
         // Find and set current lesson
         if (lessonId) {
+          // Check if the lessonId exists in the current course
+          let lessonFound = false;
           for (const section of courseSections) {
             const lesson = section.lessons.find(l => l.id === parseInt(lessonId));
             if (lesson) {
               setCurrentLesson(lesson);
+              lessonFound = true;
               break;
             }
           }
+          
+          // If lessonId doesn't exist in current course, redirect to first lesson
+          if (!lessonFound && courseSections[0]?.lessons[0]) {
+            const firstLesson = courseSections[0].lessons[0];
+            setCurrentLesson(firstLesson);
+            navigate(`/courses/${courseId}/lessons/${firstLesson.id}`);
+          }
         } else if (courseSections[0]?.lessons[0]) {
           // If no lessonId provided, set first lesson as current
-          setCurrentLesson(courseSections[0].lessons[0]);
-          navigate(`/courses/${courseId}/lessons/${courseSections[0].lessons[0].id}`);
+          const firstLesson = courseSections[0].lessons[0];
+          setCurrentLesson(firstLesson);
+          navigate(`/courses/${courseId}/lessons/${firstLesson.id}`);
         }
 
       } catch (err) {
