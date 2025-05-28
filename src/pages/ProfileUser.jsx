@@ -93,9 +93,23 @@ const ProfileUser = () => {
         imageUrl: user.imageUrl || '',
         profileImageData: profile.profileImageData || ''
       });
-      alert('Cập nhật thông tin thành công!');
+      toast.success('Cập nhật thông tin thành công!', {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     } catch (error) {
-      alert('Có lỗi khi cập nhật thông tin!');
+      toast.error('Có lỗi khi cập nhật thông tin!', {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
       console.error('Lỗi cập nhật:', error.response ? error.response.data : error);
     }
   };
