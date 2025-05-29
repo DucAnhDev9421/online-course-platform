@@ -20,7 +20,7 @@ const CourseDetail = () => {
   const [sections, setSections] = useState([]);
   const [showAllSections, setShowAllSections] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const totalLectures = sections.reduce((sum, s) => sum + s.lectures, 0);
+  const totalLectures = sections.reduce((sum, s) => sum + (s.lessons ? s.lessons.length : 0), 0);
   const totalDuration = sections.reduce((sum, s) => sum + s.duration, 0);
   const totalSections = sections.length;
   const [showFullInstructorDesc, setShowFullInstructorDesc] = useState(false);
@@ -423,8 +423,12 @@ const CourseDetail = () => {
   useEffect(() => {
     const fetchCourseDetail = async () => {
       try {
-    setLoading(true);
+        setLoading(true);
         const response = await axios.get(`https://localhost:7261/api/courses/${courseId}`);
+        const apiSections = (response.data.sections || []).map(section => ({
+          ...section,
+          expanded: false // Thêm thuộc tính expanded để điều khiển mở rộng/thu gọn
+        }));
         const courseData = {
           id: parseInt(courseId),
           title: response.data.name,
@@ -432,7 +436,7 @@ const CourseDetail = () => {
           description: response.data.description,
           rating: 4.5, // Default value
           students: 1200, // Default value
-          image: 'https://almablog-media.s3.ap-south-1.amazonaws.com/medium_React_Fundamentals_56e32fd939.png', // Default image
+          image: response.data.imageUrl || 'https://almablog-media.s3.ap-south-1.amazonaws.com/medium_React_Fundamentals_56e32fd939.png', // Default image
           instructor: 'AI Coding', // Default value
           topics: [
             'Giới thiệu về JSX và Components',
@@ -446,27 +450,17 @@ const CourseDetail = () => {
           duration: '12 giờ', // Default value
           level: 'Trung cấp', // Default value
           lastUpdated: new Date().toISOString(),
-          lessons: [
-            { 
-              id: 1, 
-              title: 'Giới thiệu về React', 
-              duration: '15:30', 
-              completed: false,
-              description: 'Trong bài học này, bạn sẽ được tìm hiểu về React.',
-              resources: [],
-              videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-            }
-          ], // Default lessons
+          lessons: [], // Không dùng lessons mẫu nữa
           videoDemoUrl: response.data.videoDemoUrl || 'https://www.youtube.com/embed/dQw4w9WgXcQ' // Add videoDemoUrl from API
         };
         setCourse(courseData);
         setReviews([]); // Reset reviews
-        setSections([]); // Reset sections
+        setSections(apiSections); // Set sections từ API
       } catch (err) {
         setError('Failed to fetch course details');
         console.error('Error fetching course details:', err);
       } finally {
-      setLoading(false);
+        setLoading(false);
       }
     };
 
@@ -745,13 +739,28 @@ const CourseDetail = () => {
             <div className="text-gray-600 text-sm mb-4">{totalSections} phần • {totalLectures} bài giảng • {totalDuration} phút tổng thời lượng</div>
             <div className="border rounded-lg overflow-hidden">
               {(showAllSections ? sections : sections.slice(0, 10)).map((section, idx) => (
-                <div key={idx} className="border-b last:border-b-0">
+                <div key={section.id || idx} className="border-b last:border-b-0">
                   <button className="w-full flex justify-between items-center px-4 py-3 font-semibold text-left hover:bg-gray-50" onClick={() => handleToggleSection(idx)}>
                     <span>{section.title}</span>
-                    <span className="text-sm text-gray-500">{section.lectures} bài giảng • {section.duration} phút</span>
+                    <span className="text-sm text-gray-500">{section.lessons?.length || 0} bài giảng</span>
                   </button>
                   {section.expanded && (
-                    <div className="px-6 py-3 bg-gray-50 text-gray-700 text-sm">Nội dung chi tiết phần này...</div>
+                    <div className="px-6 py-3 bg-gray-50 text-gray-700 text-sm">
+                      {section.lessons && section.lessons.length > 0 ? (
+                        <ul>
+                          {section.lessons.map((lesson, lidx) => (
+                            <li key={lesson.id || lidx} className="flex items-center justify-between py-1 border-b last:border-b-0">
+                              <span>
+                                <span className="inline-block w-2 h-2 rounded-full mr-2 bg-gray-400"></span>
+                                {lesson.title}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span>Chưa có bài giảng</span>
+                      )}
+                    </div>
                   )}
                 </div>
               ))}
