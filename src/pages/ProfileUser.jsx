@@ -37,7 +37,7 @@ const ProfileUser = () => {
             firstName: data.firstName || '',
             lastName: data.lastName || '',
             imageUrl: data.imageUrl || '',
-            avatarPreview: data.imageUrl || prev.avatarPreview,
+            avatarPreview: data.imageUrl || user.imageUrl,
             profileImageData: data.profileImageData || ''
           }));
         })
@@ -92,8 +92,15 @@ const ProfileUser = () => {
         setProfile(prev => ({
           ...prev,
           avatar: null,
-          avatarPreview: '/default-avatar.png'
+          avatarPreview: user.imageUrl,
+          imageUrl: ''
         }));
+        // Gọi API cập nhật imageUrl rỗng
+        await axios.patch(`https://localhost:7261/api/users/${user.id}/profile`, {
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          imageUrl: ''
+        });
         toast.success('Đã xóa ảnh đại diện!');
       } catch (error) {
         console.error('Lỗi xóa ảnh:', error);
@@ -104,12 +111,19 @@ const ProfileUser = () => {
 
   const handleSaveProfile = async () => {
     try {
+      // Nếu là ảnh mặc định Clerk thì imageUrl là user.imageUrl, nếu là ảnh upload thì là avatarPreview
+      const isDefaultClerkAvatar = profile.avatarPreview === user.imageUrl;
+      const imageUrl = isDefaultClerkAvatar ? '' : profile.avatarPreview;
       await axios.patch(`https://localhost:7261/api/users/${user.id}/profile`, {
         firstName: profile.firstName,
         lastName: profile.lastName,
-        imageUrl: user.imageUrl || '',
-        profileImageData: profile.profileImageData || ''
+        imageUrl: imageUrl
       });
+      // Cập nhật state sau khi lưu thành công
+      setProfile(prev => ({
+        ...prev,
+        imageUrl: imageUrl
+      }));
       toast.success('Cập nhật thông tin thành công!', {
         position: "top-right",
         autoClose: 2000,

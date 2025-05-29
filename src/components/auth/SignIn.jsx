@@ -2,29 +2,29 @@ import { SignIn as ClerkSignIn } from "@clerk/clerk-react";
 import { useUser } from "@clerk/clerk-react";
 import { useEffect } from "react";
 import axios from "axios";
+import { useUserInfo } from "../../contexts/UserContext";
+import { useNavigate } from "react-router-dom";
 
 export default function SignIn() {
   const { user } = useUser();
+  const { setUserInfo } = useUserInfo();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const updateUserInfo = async () => {
+    const handleSignIn = async () => {
       if (user) {
         try {
-          await axios.post(`https://localhost:7261/api/users/${user.id}`, {
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.emailAddresses[0]?.emailAddress,
-            imageUrl: user.imageUrl
-          });
-          console.log('User information updated successfully');
+          const response = await axios.get(`https://localhost:7261/api/users/${user.id}`);
+          setUserInfo(response.data);
+          navigate('/'); // Redirect to home page after successful sign in
         } catch (error) {
-          console.error('Error updating user information:', error);
+          console.error('Error fetching user information:', error);
         }
       }
     };
 
-    updateUserInfo();
-  }, [user]);
+    handleSignIn();
+  }, [user, setUserInfo, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">

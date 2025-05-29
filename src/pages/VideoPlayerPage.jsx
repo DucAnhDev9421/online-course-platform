@@ -38,7 +38,7 @@ const VideoPlayerPage = () => {
             content: lesson.content,
             duration: '00:00', // Default duration since not provided by API
             completed: false, // Default completion status
-            videoUrl: 'https://youtu.be/x0fSBAgBrOQ?list=PL_-VfJajZj0UXjlKfBwFX73usByw3Ph9Q' // Default video URL
+            videoUrl: lesson.content || '' // Sử dụng URL video từ API thay vì hardcode
           }))
         }));
         

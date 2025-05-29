@@ -4,6 +4,10 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import axios from 'axios';
+import { FaEllipsisV } from 'react-icons/fa';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useUser } from '@clerk/clerk-react';
 
 const COURSE_LEVELS = [
   { value: '', label: 'Chọn trình độ' },
@@ -60,6 +64,8 @@ const AdminCourses = () => {
   const [editingLecture, setEditingLecture] = useState({ id: null, sectionId: null, title: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const { user } = useUser();
 
   // Thêm useEffect để lấy danh sách danh mục khi component mount
   useEffect(() => {
@@ -94,8 +100,7 @@ const AdminCourses = () => {
             id: course.id,
             name: course.name,
             date: new Date().toISOString().split('T')[0], // Tạm thời dùng ngày hiện tại
-            instructor: 'Chưa có giảng viên', // Tạm thời
-            instructorAvatar: 'https://randomuser.me/api/portraits/men/1.jpg', // Tạm thời
+            instructor: course.instructor || null,
             status: course.status === 0 ? 'pending' : course.status === 1 ? 'approved' : 'rejected',
             statusText: course.statusText,
             level: course.level,
@@ -105,7 +110,7 @@ const AdminCourses = () => {
             price: course.price,
             description: course.description,
             image: course.imageUrl || 'https://placehold.co/80x80/8b5cf6/fff?text=Course',
-            videoDemoUrl: course.videoDemoUrl || '', // Add videoDemoUrl
+            videoDemoUrl: course.videoDemoUrl || '',
           }));
           setCourses(formattedCourses);
         }
@@ -124,12 +129,12 @@ const AdminCourses = () => {
   const handleAddCourse = async (e) => {
     e.preventDefault();
     if (!courseTitle.trim() || !courseCategory) {
-      setMessage('Vui lòng nhập đầy đủ thông tin khóa học!');
-      setMessageType('error');
+      toast.error('Vui lòng nhập đầy đủ thông tin khóa học!');
       return;
     }
 
     try {
+      setIsLoading(true);
       // Chuyển đổi level từ string sang number
       const levelMap = {
         'beginner': 1,
@@ -143,7 +148,7 @@ const AdminCourses = () => {
         price: Number(coursePrice) || 0,
         description: courseDesc,
         imageUrl: courseImage,
-        videoDemoUrl: courseVideo, // Add videoDemoUrl
+        videoDemoUrl: courseVideo,
         status: 0, // pending
         level: levelMap[courseLevel] || 0,
         categoryId: Number(courseCategory),
@@ -155,35 +160,15 @@ const AdminCourses = () => {
                   lecture.contentType === 'mixed' ? 1 : 2,
             content: lecture.contentType === 'video' ? lecture.videoUrl : ''
           }))
-        }))
+        })),
+        InstructorId: user?.id
       };
 
       // Gọi API tạo khóa học
       const response = await axios.post('https://localhost:7261/api/courses', courseData);
 
       if (response.data) {
-        // Thêm khóa học mới vào danh sách
-        const newCourse = {
-          id: response.data.id,
-          name: response.data.name,
-          date: new Date().toISOString().split('T')[0],
-          instructor: 'Chưa có giảng viên',
-          instructorAvatar: 'https://randomuser.me/api/portraits/men/1.jpg',
-          status: 'pending',
-          statusText: 'Pending',
-          level: response.data.level,
-          levelText: response.data.levelText,
-          categoryId: response.data.categoryId,
-          categoryName: response.data.categoryName,
-          price: response.data.price,
-          description: response.data.description,
-          image: response.data.imageUrl || 'https://placehold.co/80x80/8b5cf6/fff?text=Course',
-          videoDemoUrl: response.data.videoDemoUrl || '', // Add videoDemoUrl
-        };
-        setCourses([...courses, newCourse]);
-
-        setMessage('Thêm khóa học thành công!');
-        setMessageType('success');
+        toast.success('Thêm khóa học thành công!');
         
         // Reset form
         setCourseTitle('');
@@ -203,30 +188,53 @@ const AdminCourses = () => {
         }]);
         setShowAddForm(false);
         setStep(0);
+
+        // Fetch lại danh sách khóa học
+        const coursesResponse = await axios.get('https://localhost:7261/api/courses');
+        if (coursesResponse.data) {
+          const formattedCourses = coursesResponse.data.map(course => ({
+            id: course.id,
+            name: course.name,
+            date: new Date().toISOString().split('T')[0],
+            instructor: course.instructor || null,
+            status: course.status === 0 ? 'pending' : course.status === 1 ? 'approved' : 'rejected',
+            statusText: course.statusText,
+            level: course.level,
+            levelText: course.levelText,
+            categoryId: course.categoryId,
+            categoryName: course.categoryName,
+            price: course.price,
+            description: course.description,
+            image: course.imageUrl || 'https://placehold.co/80x80/8b5cf6/fff?text=Course',
+            videoDemoUrl: course.videoDemoUrl || '',
+          }));
+          setCourses(formattedCourses);
+        }
       }
     } catch (error) {
       console.error('Error adding course:', error);
-      setMessage('Có lỗi xảy ra khi thêm khóa học!');
-      setMessageType('error');
+      toast.error('Có lỗi xảy ra khi thêm khóa học!');
+    } finally {
+      setIsLoading(false);
     }
-
-    setTimeout(() => setMessage(''), 2000);
   };
 
   const handleDeleteCourse = async (id) => {
     try {
+      setIsLoading(true);
       const response = await axios.delete(`https://localhost:7261/api/courses/${id}`);
+      
       if (response.status === 200) {
-        setCourses(courses.filter((c) => c.id !== id));
-        setMessage('Đã xóa khóa học!');
-        setMessageType('success');
+        // Cập nhật state courses bằng cách lọc ra khóa học đã xóa
+        setCourses(prevCourses => prevCourses.filter(course => course.id !== id));
+        toast.success('Đã xóa khóa học thành công!');
       }
     } catch (error) {
       console.error('Error deleting course:', error);
-      setMessage('Có lỗi xảy ra khi xóa khóa học!');
-      setMessageType('error');
+      toast.error('Có lỗi xảy ra khi xóa khóa học!');
+    } finally {
+      setIsLoading(false);
     }
-    setTimeout(() => setMessage(''), 2000);
   };
 
   const handleEditCourse = (course) => {
@@ -802,68 +810,113 @@ const AdminCourses = () => {
                     <th className="py-2 px-4">Giảng viên</th>
                     <th className="py-2 px-4">Trạng thái</th>
                     <th className="py-2 px-4">Hành động</th>
+                    <th className="py-2 px-4 w-10"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredCourses.length === 0 ? (
                     <tr><td colSpan={4} className="text-center py-8 text-gray-400">Không có khóa học nào</td></tr>
-                  ) : filteredCourses.map(course => (
-                    <tr key={course.id} className="border-t hover:bg-gray-50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center space-x-3">
-                          <img src={course.image} alt="thumb" className="w-14 h-14 rounded-lg object-cover" />
-                          <div>
-                            <div className="font-semibold text-gray-900 truncate max-w-xs">{course.name}</div>
-                            <div className="text-xs text-gray-500">Thêm ngày {course.date}</div>
+                  ) : filteredCourses.map(course => {
+                    console.log('Course row:', course);
+                    return (
+                      <tr key={course.id} className="border-t hover:bg-gray-50">
+                        <td className="py-3 px-4">
+                          <div className="flex items-center space-x-3">
+                            <img src={course.image} alt="thumb" className="w-14 h-14 rounded-lg object-cover" />
+                            <div>
+                              <div className="font-semibold text-gray-900 truncate max-w-xs">{course.name}</div>
+                              <div className="text-xs text-gray-500">Thêm ngày {course.date}</div>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 align-top">
-                        <span>{course.instructor}</span>
-                      </td>
-                      <td className="py-3 px-4 align-top">{getStatusBadge(course.status)}</td>
-                      <td className="py-3 px-4 align-top space-x-2">
-                        {course.status === 'pending' && (
-                          <>
+                        </td>
+                        <td className="py-3 px-4 align-top">
+                          {course.instructor ? (
+                            <div className="flex items-center">
+                              <img
+                                src={course.instructor.imageUrl}
+                                alt={course.instructor.username}
+                                className="w-8 h-8 rounded-full object-cover mr-2"
+                              />
+                              <span>{course.instructor.username}</span>
+                            </div>
+                          ) : (
+                            <span>Chưa có giảng viên</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 align-top">{getStatusBadge(course.status)}</td>
+                        <td className="py-3 px-4 align-top space-x-2">
+                          {course.status === 'pending' && (
+                            <>
+                              <button 
+                                onClick={() => handleStatusChange(course.id, 'rejected')} 
+                                className="border px-3 py-1 rounded text-gray-700 hover:bg-gray-100"
+                              >
+                                Từ chối
+                              </button>
+                              <button 
+                                onClick={() => handleStatusChange(course.id, 'approved')} 
+                                className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                              >
+                                Duyệt
+                              </button>
+                            </>
+                          )}
+                          {course.status === 'approved' && (
                             <button 
-                              onClick={() => handleStatusChange(course.id, 'rejected')} 
-                              className="border px-3 py-1 rounded text-gray-700 hover:bg-gray-100"
+                              onClick={() => handleStatusChange(course.id, 'pending')} 
+                              className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600"
                             >
-                              Từ chối
+                              Đổi trạng thái
                             </button>
+                          )}
+                          {course.status === 'rejected' && (
                             <button 
-                              onClick={() => handleStatusChange(course.id, 'approved')} 
-                              className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                              onClick={() => handleStatusChange(course.id, 'pending')} 
+                              className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600"
                             >
-                              Duyệt
+                              Đổi trạng thái
                             </button>
-                          </>
-                        )}
-                        {course.status === 'approved' && (
-                          <button 
-                            onClick={() => handleStatusChange(course.id, 'pending')} 
-                            className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600"
+                          )}
+                        </td>
+                        <td
+                          className="py-3 px-4 align-top relative"
+                          onMouseEnter={() => setOpenDropdown(course.id)}
+                          onMouseLeave={() => setOpenDropdown(null)}
+                        >
+                          <button
+                            className="p-2 rounded-full hover:bg-gray-200 focus:outline-none"
+                            tabIndex={-1}
                           >
-                            Đổi trạng thái
+                            <FaEllipsisV />
                           </button>
-                        )}
-                        {course.status === 'rejected' && (
-                          <button 
-                            onClick={() => handleStatusChange(course.id, 'pending')} 
-                            className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600"
-                          >
-                            Đổi trạng thái
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                          {openDropdown === course.id && (
+                            <div className="absolute right-10 top-2 z-10 bg-white border rounded shadow-lg min-w-[120px]">
+                              <button
+                                className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 whitespace-nowrap"
+                                onClick={async () => {
+                                  try {
+                                    await handleDeleteCourse(course.id);
+                                    setOpenDropdown(null);
+                                  } catch (error) {
+                                    console.error('Error deleting course:', error);
+                                  }
+                                }}
+                              >
+                                Xóa khóa học
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}
           </div>
         </div>
       )}
+      <ToastContainer />
     </div>
   );
 };

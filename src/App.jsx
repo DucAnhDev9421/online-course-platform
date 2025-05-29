@@ -23,6 +23,7 @@ import Favorites from './pages/Favorites';
 import Cart from './pages/Cart';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { UserProvider } from './contexts/UserContext';
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -107,19 +108,21 @@ function AppLayout() {
 export default function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/teaching" element={
-          <ProtectedRoute>
-            <TeachingPage />
-          </ProtectedRoute>
-        } />
-        <Route path="/teaching/courses/:courseId" element={
-          <ProtectedRoute>
-            <CourseManagementPage />
-          </ProtectedRoute>
-        } />
-        <Route path="/*" element={<AppLayout />} />
-      </Routes>
+      <UserProvider>
+        <Routes>
+          <Route path="/teaching" element={
+            <ProtectedRoute>
+              <TeachingPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/teaching/courses/:courseId" element={
+            <ProtectedRoute>
+              <CourseManagementPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/*" element={<AppLayout />} />
+        </Routes>
+      </UserProvider>
     </Router>
   );
 }
