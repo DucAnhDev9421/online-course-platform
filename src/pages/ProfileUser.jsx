@@ -10,7 +10,7 @@ const ProfileUser = () => {
     firstName: '',
     lastName: '',
     jobTitle: '',
-    sectionBU: '',
+    bio: '',
     language: 'vi',
     avatar: null,
     avatarPreview: '/default-avatar.png'
@@ -38,7 +38,9 @@ const ProfileUser = () => {
             lastName: data.lastName || '',
             imageUrl: data.imageUrl || '',
             avatarPreview: data.imageUrl || user.imageUrl,
-            profileImageData: data.profileImageData || ''
+            profileImageData: data.profileImageData || '',
+            jobTitle: data.jobTitle || '',
+            bio: data.bio || '',
           }));
         })
         .catch(err => {
@@ -117,7 +119,9 @@ const ProfileUser = () => {
       await axios.patch(`https://localhost:7261/api/users/${user.id}/profile`, {
         firstName: profile.firstName,
         lastName: profile.lastName,
-        imageUrl: imageUrl
+        imageUrl: imageUrl,
+        jobTitle: profile.jobTitle,
+        bio: profile.bio,
       });
       // Cập nhật state sau khi lưu thành công
       setProfile(prev => ({
@@ -247,8 +251,8 @@ const ProfileUser = () => {
       <div className="section-bu mb-8">
         <h2 className="text-lg font-semibold text-gray-700 mb-4">Giới thiệu</h2>
         <textarea
-          name="sectionBU"
-          value={profile.sectionBU}
+          name="bio"
+          value={profile.bio}
           onChange={handleChange}
           className="w-full p-2 border border-gray-300 rounded h-20"
           placeholder="Viết một vài dòng giới thiệu về bạn..."
