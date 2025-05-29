@@ -85,6 +85,23 @@ const ProfileUser = () => {
     }
   };
 
+  const handleClearAvatar = async () => {
+    if (user) {
+      try {
+        await user.setProfileImage({ file: null });
+        setProfile(prev => ({
+          ...prev,
+          avatar: null,
+          avatarPreview: '/default-avatar.png'
+        }));
+        toast.success('Đã xóa ảnh đại diện!');
+      } catch (error) {
+        console.error('Lỗi xóa ảnh:', error);
+        toast.error('Không thể xóa ảnh đại diện.');
+      }
+    }
+  };
+
   const handleSaveProfile = async () => {
     try {
       await axios.patch(`https://localhost:7261/api/users/${user.id}/profile`, {
@@ -114,6 +131,8 @@ const ProfileUser = () => {
     }
   };
 
+  const isDefaultClerkAvatar = profile.avatarPreview?.includes('/avatar.png') || profile.avatarPreview === '/default-avatar.png';
+
   return (
     <div className="profile-container max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md mt-12">
       <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center sm:text-left">Hồ sơ công khai</h1>
@@ -142,6 +161,14 @@ const ProfileUser = () => {
             accept="image/*"
             className="hidden"
           />
+          <button
+            type="button"
+            onClick={handleClearAvatar}
+            className={`mt-2 px-3 py-1 rounded text-white ${isDefaultClerkAvatar ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600'}`}
+            disabled={isDefaultClerkAvatar}
+          >
+            Xóa ảnh
+          </button>
           {isEditingAvatar && (
             <div className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md">
               <button 

@@ -242,8 +242,16 @@ export default function Header() {
                   className="flex items-center space-x-1 focus:outline-none"
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
                 >
-                  <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white font-medium">
-                    {user?.firstName?.charAt(0) || user?.username?.charAt(0) || 'U'}
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-purple-600 flex items-center justify-center text-white font-medium">
+                    {user?.imageUrl ? (
+                      <img
+                        src={user.imageUrl}
+                        alt="Avatar"
+                        className="w-8 h-8 object-cover"
+                      />
+                    ) : (
+                      user?.firstName?.charAt(0) || user?.username?.charAt(0) || 'U'
+                    )}
                   </div>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
