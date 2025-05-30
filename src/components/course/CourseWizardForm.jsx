@@ -132,6 +132,11 @@ const CourseWizardForm = ({
         />
       </div>
       <div className="mb-4">
+        {form.image && (form.image.startsWith('http://') || form.image.startsWith('https://')) && (
+          <div className="mb-2 flex justify-center">
+            <img src={form.image} alt="Preview" className="max-h-48 rounded shadow border" />
+          </div>
+        )}
         <label className="block font-semibold mb-1">Ảnh bìa (URL hoặc file)</label>
         <input
           type="text"

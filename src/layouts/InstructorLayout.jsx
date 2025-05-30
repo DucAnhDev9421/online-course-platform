@@ -20,20 +20,20 @@ function InstructorLayout({ sidebarTab, setSidebarTab, children }) {
         </div>
         <nav className={`flex-1 space-y-2 ${sidebarOpen ? '' : 'flex flex-col items-center'}`}>
           <button
-            className={`w-full flex items-center ${sidebarOpen ? 'px-4' : 'justify-center'} py-2 rounded-lg text-left transition-colors ${sidebarTab === 'courses' ? 'bg-purple-100 text-purple-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}
-            onClick={() => setSidebarTab('courses')}
-            title="Khóa học"
-          >
-            <i className="fas fa-book mr-3"></i>
-            {sidebarOpen && 'Khóa học'}
-          </button>
-          <button
             className={`w-full flex items-center ${sidebarOpen ? 'px-4' : 'justify-center'} py-2 rounded-lg text-left transition-colors ${sidebarTab === 'performance' ? 'bg-purple-100 text-purple-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}
             onClick={() => setSidebarTab('performance')}
             title="Hiệu suất"
           >
             <i className="fas fa-chart-line mr-3"></i>
             {sidebarOpen && 'Hiệu suất'}
+          </button>
+          <button
+            className={`w-full flex items-center ${sidebarOpen ? 'px-4' : 'justify-center'} py-2 rounded-lg text-left transition-colors ${sidebarTab === 'courses' ? 'bg-purple-100 text-purple-700 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}
+            onClick={() => setSidebarTab('courses')}
+            title="Khóa học"
+          >
+            <i className="fas fa-book mr-3"></i>
+            {sidebarOpen && 'Khóa học'}
           </button>
         </nav>
         <div className={`flex-0 mt-auto pt-8 ${sidebarOpen ? '' : 'flex flex-col items-center'}`}>

@@ -32,43 +32,45 @@ export default function Slider() {
   ]);
 
   return (
-    <section className="relative py-0 bg-gray-900 text-white">
-      <Swiper
-        modules={[Navigation, Pagination, Autoplay]}
-        spaceBetween={0}
-        slidesPerView={1}
-        navigation
-        pagination={{ clickable: true }}
-        autoplay={{
-          delay: 7000,
-          disableOnInteraction: false,
-        }}
-        loop={true}
-        className="h-[500px]"
-      >
-        {slides.map((slide) => (
-          <SwiperSlide key={slide.id}>
-            <div 
-              className="relative h-full w-full bg-cover bg-center"
-              style={{ backgroundImage: `url(${slide.image})` }}
-            >
-              <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-              <div className="container mx-auto px-4 h-full flex items-center">
-                <div className="max-w-2xl bg-black bg-opacity-40 p-8 rounded-lg backdrop-blur-sm">
-                  <h1 className="text-4xl md:text-5xl font-bold mb-4">{slide.title}</h1>
-                  <p className="text-lg mb-6">{slide.description}</p>
-                  <Link 
-                    to="/courses" 
-                    className="inline-block bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-6 rounded-md transition duration-300"
-                  >
-                    Khám phá khóa học
-                  </Link>
+    <section className="relative py-0 bg-white text-white">
+      <div className="w-full rounded-2xl border border-gray-200 shadow-lg overflow-hidden" style={{height: 280}}>
+        <Swiper
+          modules={[Navigation, Pagination, Autoplay]}
+          spaceBetween={0}
+          slidesPerView={1}
+          navigation
+          pagination={{ clickable: true }}
+          autoplay={{
+            delay: 7000,
+            disableOnInteraction: false,
+          }}
+          loop={true}
+          className="h-full"
+        >
+          {slides.map((slide) => (
+            <SwiperSlide key={slide.id}>
+              <div 
+                className="relative h-full w-full bg-cover bg-center"
+                style={{ backgroundImage: `url(${slide.image})`, minHeight: 280 }}
+              >
+                <div className="absolute inset-0 bg-black bg-opacity-20 rounded-2xl"></div>
+                <div className="container mx-auto px-4 h-full flex items-center">
+                  <div className="max-w-xl bg-black bg-opacity-40 p-6 rounded-xl backdrop-blur-sm">
+                    <h1 className="text-2xl md:text-3xl font-bold mb-2">{slide.title}</h1>
+                    <p className="text-base mb-4">{slide.description}</p>
+                    <Link 
+                      to="/courses" 
+                      className="inline-block bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-5 rounded-md transition duration-300 text-base"
+                    >
+                      Khám phá khóa học
+                    </Link>
+                  </div>
                 </div>
               </div>
-            </div>
-          </SwiperSlide>
-        ))}
-      </Swiper>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      </div>
     </section>
   );
 } 

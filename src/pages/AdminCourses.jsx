@@ -379,6 +379,11 @@ const AdminCourses = () => {
           onChange={e => setCourseVideo(e.target.value)}
         />
       </div>
+      {courseImage && (courseImage.startsWith('http://') || courseImage.startsWith('https://')) && (
+        <div className="mb-2 flex justify-center">
+          <img src={courseImage} alt="Preview" className="max-h-48 rounded shadow border" />
+        </div>
+      )}
       <div className="mb-4">
         <label className="block font-semibold mb-1">Ảnh bìa (URL hoặc file)</label>
         <input
@@ -833,8 +838,8 @@ const AdminCourses = () => {
                           {course.instructor ? (
                             <div className="flex items-center">
                               <img
-                                src={course.instructor.imageUrl}
-                                alt={course.instructor.username}
+                                src={course.instructor.imageUrl || course.instructor.profileImageUrl || 'https://placehold.co/32x32/8b5cf6/fff?text=U'}
+                                alt={course.instructor.username || course.instructor.firstName || 'Instructor'}
                                 className="w-8 h-8 rounded-full object-cover mr-2"
                               />
                               <span>{course.instructor.username}</span>
