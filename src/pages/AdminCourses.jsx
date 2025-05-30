@@ -839,10 +839,10 @@ const AdminCourses = () => {
                             <div className="flex items-center">
                               <img
                                 src={course.instructor.imageUrl || course.instructor.profileImageUrl || 'https://placehold.co/32x32/8b5cf6/fff?text=U'}
-                                alt={course.instructor.username || course.instructor.firstName || 'Instructor'}
+                                alt={course.instructor.username || 'Instructor'}
                                 className="w-8 h-8 rounded-full object-cover mr-2"
                               />
-                              <span>{course.instructor.username}</span>
+                              <span>{course.instructor.username || 'Giảng viên'}</span>
                             </div>
                           ) : (
                             <span>Chưa có giảng viên</span>

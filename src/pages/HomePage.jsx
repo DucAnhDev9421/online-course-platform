@@ -64,7 +64,7 @@ const HomePage = () => {
             className="w-16 h-16 rounded-full border-2 border-gray-200 shadow"
           />
           <div>
-            <h2 className="text-2xl font-bold">Chào mừng {user.fullName || user.username || 'bạn'} trở lại!</h2>
+            <h2 className="text-2xl font-bold">Chào mừng {user.firstName || 'bạn'} trở lại!</h2>
             <p className="text-gray-600">{jobTitle}</p>
           </div>
         </div>
