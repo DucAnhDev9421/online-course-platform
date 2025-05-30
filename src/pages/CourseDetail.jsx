@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '@clerk/clerk-react';
 import { toast } from 'react-toastify';
+import CourseCard from '@components/courses/CourseCard';
 
 const CourseDetail = () => {
   const { courseId } = useParams();
@@ -20,12 +21,29 @@ const CourseDetail = () => {
   const [sections, setSections] = useState([]);
   const [showAllSections, setShowAllSections] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const totalLectures = sections.reduce((sum, s) => sum + (s.lessons ? s.lessons.length : 0), 0);
-  const totalDuration = sections.reduce((sum, s) => sum + s.duration, 0);
+  const totalLectures = sections.reduce((sum, section) => sum + (section.lessons ? section.lessons.length : 0), 0);
+  const totalDurationMinutes = sections.reduce((total, section) => {
+    const sectionDuration = (section.lessons || []).reduce((sum, lesson) => {
+      const duration = typeof lesson.duration === 'number' ? lesson.duration : 0;
+      return sum + duration;
+    }, 0);
+    return total + sectionDuration;
+  }, 0);
   const totalSections = sections.length;
   const [showFullInstructorDesc, setShowFullInstructorDesc] = useState(false);
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [expandedReviews, setExpandedReviews] = useState({});
+  const [relatedCourses, setRelatedCourses] = useState([]);
+
+  // Tính tổng thời lượng
+  const formatTotalDuration = (minutes) => {
+    if (minutes === 0) return '0 phút';
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    if (hours > 0 && remainingMinutes > 0) return `${hours} giờ ${remainingMinutes} phút`;
+    if (hours > 0) return `${hours} giờ`;
+    return `${remainingMinutes} phút`;
+  };
 
   // Dữ liệu mẫu cho khóa học (trong thực tế, bạn sẽ fetch từ API)
   const coursesData = [
@@ -427,17 +445,17 @@ const CourseDetail = () => {
         const response = await axios.get(`https://localhost:7261/api/courses/${courseId}`);
         const apiSections = (response.data.sections || []).map(section => ({
           ...section,
-          expanded: false // Thêm thuộc tính expanded để điều khiển mở rộng/thu gọn
+          expanded: false
         }));
         const courseData = {
-          id: parseInt(courseId),
+          id: response.data.id,
           title: response.data.name,
           price: response.data.price,
           description: response.data.description,
-          rating: 4.5, // Default value
-          students: 1200, // Default value
-          image: response.data.imageUrl || 'https://almablog-media.s3.ap-south-1.amazonaws.com/medium_React_Fundamentals_56e32fd939.png', // Default image
-          instructor: 'AI Coding', // Default value
+          rating: 4.5,
+          students: 1200,
+          image: response.data.imageUrl || 'https://almablog-media.s3.ap-south-1.amazonaws.com/medium_React_Fundamentals_56e32fd939.png',
+          instructor: response.data.instructor,
           topics: [
             'Giới thiệu về JSX và Components',
             'Hiểu về Props và State',
@@ -446,16 +464,23 @@ const CourseDetail = () => {
             'Routing với React Router',
             'State Management với Context API và Redux',
             'Tối ưu hiệu suất React'
-          ], // Default topics
-          duration: '12 giờ', // Default value
-          level: 'Trung cấp', // Default value
+          ],
+          duration: response.data.totalDuration || '',
+          level: response.data.levelText || '',
           lastUpdated: new Date().toISOString(),
-          lessons: [], // Không dùng lessons mẫu nữa
-          videoDemoUrl: response.data.videoDemoUrl || 'https://www.youtube.com/embed/dQw4w9WgXcQ' // Add videoDemoUrl from API
+          lessons: [],
+          videoDemoUrl: response.data.videoDemoUrl || 'https://www.youtube.com/embed/dQw4w9WgXcQ'
         };
         setCourse(courseData);
-        setReviews([]); // Reset reviews
-        setSections(apiSections); // Set sections từ API
+        setReviews([]);
+        setSections(apiSections);
+        // Lấy khóa học liên quan
+        try {
+          const relatedRes = await axios.get(`https://localhost:7261/api/courses/${courseId}/related`);
+          setRelatedCourses(relatedRes.data || []);
+        } catch (err) {
+          setRelatedCourses([]);
+        }
       } catch (err) {
         setError('Failed to fetch course details');
         console.error('Error fetching course details:', err);
@@ -463,7 +488,6 @@ const CourseDetail = () => {
         setLoading(false);
       }
     };
-
     fetchCourseDetail();
   }, [courseId]);
 
@@ -699,7 +723,7 @@ const CourseDetail = () => {
           <span className="text-gray-300 text-sm ml-2">{course.students.toLocaleString()} học viên</span>
         </div>
         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-300 mb-2">
-          <span>Được tạo bởi <span className="font-semibold text-white">{course.instructor || 'AI Coding'}</span></span>
+          <span>Được tạo bởi <span className="font-semibold text-white">{course.instructor?.username || 'AI Coding'}</span></span>
           <span className="flex items-center gap-1">
             <i className="fas fa-history"></i>
             Lần cập nhật gần nhất <span className="font-semibold">{course.lastUpdated ? (typeof course.lastUpdated === 'string' ? course.lastUpdated : new Date(course.lastUpdated).toLocaleDateString('vi-VN', { month: 'numeric', year: 'numeric' })) : '5/2025'}</span>
@@ -736,7 +760,7 @@ const CourseDetail = () => {
               <h2 className="text-2xl font-bold">Nội dung khóa học</h2>
               <button className="text-purple-700 font-semibold hover:underline" onClick={handleExpandAll}>Mở rộng tất cả các phần</button>
             </div>
-            <div className="text-gray-600 text-sm mb-4">{totalSections} phần • {totalLectures} bài giảng • {totalDuration} phút tổng thời lượng</div>
+            <div className="text-gray-600 text-sm mb-4">{totalSections} phần • {totalLectures} bài giảng • {course?.duration || '0 phút'} tổng thời lượng</div>
             <div className="border rounded-lg overflow-hidden">
               {(showAllSections ? sections : sections.slice(0, 10)).map((section, idx) => (
                 <div key={section.id || idx} className="border-b last:border-b-0">
@@ -749,11 +773,14 @@ const CourseDetail = () => {
                       {section.lessons && section.lessons.length > 0 ? (
                         <ul>
                           {section.lessons.map((lesson, lidx) => (
-                            <li key={lesson.id || lidx} className="flex items-center justify-between py-1 border-b last:border-b-0">
+                            <li key={lesson.id || lidx} className="flex items-center justify-between py-1 border-b last:border-b-0 text-gray-700 text-sm">
                               <span>
                                 <span className="inline-block w-2 h-2 rounded-full mr-2 bg-gray-400"></span>
                                 {lesson.title}
                               </span>
+                              {lesson.duration && (
+                                <span className="text-gray-500 text-xs">{lesson.duration}</span>
+                              )}
                             </li>
                           ))}
                         </ul>
@@ -780,9 +807,9 @@ const CourseDetail = () => {
           <div className="bg-white rounded-lg shadow p-8 mb-8">
             <h2 className="text-2xl font-bold mb-4">Giảng viên</h2>
             <div className="flex items-center mb-4">
-              <img src="https://i.imgur.com/1bX5QH6.png" alt="AI Coding" className="w-24 h-24 rounded-full object-cover border-4 border-purple-200 mr-6" />
+              <img src={course?.instructor?.imageUrl || 'https://ui-avatars.com/api/?name=GV&background=random'} alt={course?.instructor?.username || 'Giảng viên'} className="w-24 h-24 rounded-full object-cover border-4 border-purple-200 mr-6" />
               <div>
-                <a href="#" className="text-xl font-bold text-purple-700 hover:underline">AI Coding</a>
+                <a href="#" className="text-xl font-bold text-purple-700 hover:underline">{course?.instructor?.username || 'Giảng viên'}</a>
                 <div className="text-gray-500 text-base mb-2">Senior AI Engineer</div>
                 <div className="flex flex-wrap items-center gap-4 text-gray-600 text-sm">
                   <span className="flex items-center"><i className="fas fa-star text-yellow-500 mr-1"></i>4,8 xếp hạng giảng viên</span>
@@ -798,7 +825,6 @@ const CourseDetail = () => {
                 <span key="1" className="font-bold">Mình từng học Kỹ sư tài năng tại Đại Học Bách khoa Hà Nội trong 2 năm. Sau đó mình đi du học và tốt nghiệp thạc sĩ vật lý hạt nhân tại trường đại học MEPhI - một trong những ngôi trường tốt nhất tại liên bang Nga.</span>,
                 <> Sau đó, mình có cơ hội làm việc trong lĩnh vực công nghệ thông tin, bén duyên với lĩnh vực này và hiện tại <span className="font-bold text-purple-700">mình đang là Senior AI Engineer</span> ❤️❤️❤️</>,
                 <><br/><br/>Mình đã có nhiều năm kinh nghiệm làm việc với <span className="font-bold">Python và trí tuệ nhân tạo (AI)</span>. Các lĩnh vực chuyên môn chính của mình bao gồm: thị giác máy tính (<span className="font-bold">Computer Vision</span>), xử lý ngôn ngữ tự nhiên (<span className="font-bold">NLP</span>), truy xuất thông tin RAG, <span className="font-bold">AI Agents</span>, triển khai mô hình AI lên các nền tảng đám mây hoặc thiết bị biên, tối ưu hóa hiệu suất của các mô hình AI, <span className="font-bold">workflow automation với AI</span>.</>,
-                <><br/><br/>Ngôn ngữ: Tiếng Anh, Tiếng Nga</>,
                 <><br/><br/>Mình rất vui khi được gặp gỡ và chia sẻ kiến thức cũng như đồng hành cùng với các bạn. Hãy luôn giữ đam mê và nhiệt huyết, thành công sẽ đến với chúng ta!</>
               ];
               const maxLines = 4;
@@ -892,17 +918,17 @@ const CourseDetail = () => {
               <button 
                 className="flex-1 bg-purple-600 text-white py-3 rounded-md text-lg font-semibold hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed"
                 onClick={handleAddToCart}
-                disabled={isAddingToCart}
+                disabled={isAddingToCart || course.price === 0}
               >
-                {isAddingToCart ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Đang thêm...
-                  </span>
-                ) : 'Thêm vào giỏ hàng'}
+                {isAddingToCart
+                  ? (<span className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Đang thêm...
+                    </span>)
+                  : 'Thêm vào giỏ hàng'}
               </button>
               <button
                 onClick={handleToggleFavorite}
@@ -1005,6 +1031,26 @@ const CourseDetail = () => {
             ))}
         </div>
       </div>
+      {/* Khóa học liên quan */}
+      {relatedCourses.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-8 mb-8">
+          <h2 className="text-2xl font-bold mb-6">Khóa học liên quan</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {relatedCourses.map((related) => (
+              <CourseCard
+                key={related.id}
+                id={related.id}
+                title={related.title || related.name}
+                instructor={related.instructor}
+                price={related.price}
+                rating={related.rating}
+                students={related.students}
+                image={related.image || related.imageUrl}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
