@@ -24,7 +24,7 @@ const HomePage = () => {
           .map(course => ({
             id: course.id,
             title: course.name,
-            instructor: course.instructor?.username || course.instructor?.firstName || 'Giảng viên',
+            instructor: course.instructor,
             price: course.price,
             rating: 4.5, // hoặc course.rating nếu có
             students: 0, // hoặc course.students nếu có

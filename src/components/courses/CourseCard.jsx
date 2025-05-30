@@ -6,7 +6,7 @@ export default function CourseCard({ title, instructor, price, rating, students,
   let avatarUrl = '';
   let instructorName = '';
   if (typeof instructor === 'object' && instructor !== null) {
-    avatarUrl = instructor.image_url || instructor.profile_image_url || 'https://ui-avatars.com/api/?name=GV&background=random';
+    avatarUrl = instructor.imageUrl || instructor.profileImageUrl || instructor.image_url || instructor.profile_image_url || 'https://ui-avatars.com/api/?name=GV&background=random';
     instructorName = instructor.username || instructor.first_name || instructor.firstName || instructor.name || 'Giảng viên';
   } else {
     instructorName = instructor || 'Giảng viên';
