@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
+import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function MyCourses() {
   const navigate = useNavigate();
@@ -37,26 +40,38 @@ function MyCourses() {
     setShowUnenrollConfirm(true);
   };
 
-  const handleUnenrollConfirm = () => {
+  const handleUnenrollConfirm = async () => {
+    if (!selectedCourse || !user) return;
+
     try {
-      // Lọc bỏ khóa học đã chọn
-      const updatedCourses = enrolledCourses.filter(c => c.id !== selectedCourse.id);
-      
-      // Cập nhật localStorage
-      localStorage.setItem('enrolledCourses', JSON.stringify(updatedCourses));
-      
-      // Cập nhật state
-      setEnrolledCourses(updatedCourses);
-      
-      // Đóng dialog xác nhận
-      setShowUnenrollConfirm(false);
-      setSelectedCourse(null);
-      
-      // Hiển thị thông báo thành công
-      alert(`Đã hủy đăng ký khóa học: ${selectedCourse.title}`);
+      // Gọi API hủy đăng ký khóa học
+      const response = await axios.delete('https://localhost:7261/api/Enrollments', {
+        data: {
+          userId: user.id,
+          courseId: parseInt(selectedCourse.id)
+        }
+      });
+
+      if (response.status === 200) {
+        // Lọc bỏ khóa học đã chọn
+        const updatedCourses = enrolledCourses.filter(c => c.id !== selectedCourse.id);
+        
+        // Cập nhật localStorage
+        localStorage.setItem('enrolledCourses', JSON.stringify(updatedCourses));
+        
+        // Cập nhật state
+        setEnrolledCourses(updatedCourses);
+        
+        // Đóng dialog xác nhận
+        setShowUnenrollConfirm(false);
+        setSelectedCourse(null);
+        
+        // Hiển thị thông báo thành công
+        toast.success(`Đã hủy đăng ký khóa học: ${selectedCourse.title}`);
+      }
     } catch (error) {
       console.error('Error unenrolling course:', error);
-      alert('Có lỗi xảy ra khi hủy đăng ký khóa học. Vui lòng thử lại sau.');
+      toast.error('Có lỗi xảy ra khi hủy đăng ký khóa học. Vui lòng thử lại sau.');
     }
   };
 
@@ -175,6 +190,7 @@ function MyCourses() {
           </div>
         </div>
       )}
+      <ToastContainer />
     </div>
   );
 }
