@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useUser } from '@clerk/clerk-react';
 
 const LEVELS = [
   { value: 'beginner', label: 'Sơ cấp' },
@@ -25,6 +28,7 @@ const SORT_OPTIONS = [
 
 const CourseList = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -52,18 +56,20 @@ const CourseList = () => {
       try {
         setLoading(true);
         const response = await axios.get('https://localhost:7261/api/courses');
-        const mappedCourses = response.data.map(course => ({
-          id: course.id,
-          title: course.name,
-          price: course.price,
-          description: course.description,
-          level: course.levelText.toLowerCase(),
-          category: course.categoryName,
-          rating: 4.5, // Default value since not provided by API
-          students: 0, // Default value since not provided by API
-          image: course.imageUrl || 'https://almablog-media.s3.ap-south-1.amazonaws.com/medium_React_Fundamentals_56e32fd939.png', // Use imageUrl from API
-          duration: 10 // Default value since not provided by API
-        }));
+        const mappedCourses = response.data
+          .filter(course => course.status === 1) // Only show approved courses
+          .map(course => ({
+            id: course.id,
+            title: course.name,
+            price: course.price,
+            description: course.description,
+            level: course.levelText.toLowerCase(),
+            category: course.categoryName,
+            rating: 4.5, // Default value since not provided by API
+            students: 0, // Default value since not provided by API
+            image: course.imageUrl || 'https://almablog-media.s3.ap-south-1.amazonaws.com/medium_React_Fundamentals_56e32fd939.png',
+            duration: 10 // Default value since not provided by API
+          }));
         setCourses(mappedCourses);
       } catch (err) {
         setError('Failed to fetch courses');
@@ -137,26 +143,44 @@ const CourseList = () => {
     setShowConfirmModal(true);
   };
 
-  const handleConfirmEnroll = () => {
-    if (!selectedCourse) return;
+  const handleConfirmEnroll = async () => {
+    if (!selectedCourse || !user) return;
 
-    const newEnrolled = [
-      ...enrolledCourses,
-      {
-        id: selectedCourse.id,
-        title: selectedCourse.title,
-        thumbnail: selectedCourse.image,
+    try {
+      // Gọi API đăng ký khóa học
+      const enrollmentData = {
+        userId: user.id,
+        courseId: selectedCourse.id,
         enrolledAt: new Date().toISOString(),
-        progress: 0,
-        lastAccessed: new Date().toISOString()
+        progress: 0
+      };
+
+      const response = await axios.post('https://localhost:7261/api/Enrollments', enrollmentData);
+
+      if (response.status === 200 || response.status === 201) {
+        // Cập nhật danh sách khóa học đã đăng ký trong localStorage
+        const newEnrolled = [
+          ...enrolledCourses,
+          {
+            id: selectedCourse.id,
+            title: selectedCourse.title,
+            thumbnail: selectedCourse.image,
+            enrolledAt: new Date().toISOString(),
+            progress: 0,
+            lastAccessed: new Date().toISOString()
+          }
+        ];
+        localStorage.setItem('enrolledCourses', JSON.stringify(newEnrolled));
+        setEnrolledCourses(newEnrolled);
+        setShowConfirmModal(false);
+        setSelectedCourse(null);
+        toast.success(`Đăng ký thành công khóa học: ${selectedCourse.title}`);
+        navigate(`/courses/${selectedCourse.id}`);
       }
-    ];
-    localStorage.setItem('enrolledCourses', JSON.stringify(newEnrolled));
-    setEnrolledCourses(newEnrolled);
-    setShowConfirmModal(false);
-    setSelectedCourse(null);
-    alert(`Đăng ký thành công khóa học: ${selectedCourse.title}`);
-    navigate(`/courses/${selectedCourse.id}`);
+    } catch (error) {
+      console.error('Error enrolling in course:', error);
+      toast.error('Có lỗi xảy ra khi đăng ký khóa học. Vui lòng thử lại sau.');
+    }
   };
 
   return (
@@ -460,6 +484,7 @@ const CourseList = () => {
           </div>
         </div>
       )}
+      <ToastContainer />
     </div>
   );
 };

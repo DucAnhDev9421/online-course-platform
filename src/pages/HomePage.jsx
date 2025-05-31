@@ -18,9 +18,9 @@ const HomePage = () => {
       try {
         setLoading(true);
         const response = await axios.get('https://localhost:7261/api/courses');
-        // Lọc các khóa học miễn phí
+        // Lọc các khóa học miễn phí và đã được duyệt
         const freeCourses = response.data
-          .filter(course => course.price === 0)
+          .filter(course => course.price === 0 && course.status === 1)
           .map(course => ({
             id: course.id,
             title: course.name,

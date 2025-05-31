@@ -25,8 +25,8 @@ const VideoPlayerPage = () => {
   // Fetch course sections and lessons
   useEffect(() => {
     const fetchCourseDetails = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
         const response = await axios.get(`https://localhost:7261/api/courses/${courseId}`);
         const courseSections = response.data.sections.map(section => ({
           id: section.id,
@@ -36,12 +36,11 @@ const VideoPlayerPage = () => {
             title: lesson.title,
             type: lesson.type,
             content: lesson.content,
-            duration: '00:00', // Default duration since not provided by API
-            completed: false, // Default completion status
-            videoUrl: lesson.content || '' // Sử dụng URL video từ API thay vì hardcode
+            duration: lesson.duration,
+            completed: false,
           }))
         }));
-        
+
         setSections(courseSections);
         setOpenSectionIds([courseSections[0]?.id]); // Open first section by default
 
@@ -57,7 +56,7 @@ const VideoPlayerPage = () => {
               break;
             }
           }
-          
+
           // If lessonId doesn't exist in current course, redirect to first lesson
           if (!lessonFound && courseSections[0]?.lessons[0]) {
             const firstLesson = courseSections[0].lessons[0];
@@ -199,7 +198,7 @@ const VideoPlayerPage = () => {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center">
           <div className="text-2xl font-bold mb-4">Không tìm thấy bài học</div>
-          <button 
+          <button
             onClick={() => navigate(`/courses/${courseId}`)}
             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
           >
@@ -228,7 +227,7 @@ const VideoPlayerPage = () => {
           {/* Video Player */}
           <div className="w-full px-0">
             <ReactPlayer
-              url={currentLesson.videoUrl}
+              url={currentLesson.content}
               controls
               width="100%"
               style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
@@ -290,7 +289,7 @@ const VideoPlayerPage = () => {
                             toolbar: [
                               [{ 'header': [1, 2, false] }],
                               ['bold', 'italic', 'underline', 'strike'],
-                              [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                              [{ 'list': 'ordered' }, { 'list': 'bullet' }],
                               ['code-block'],
                               ['clean']
                             ]
@@ -382,19 +381,19 @@ const VideoPlayerPage = () => {
                         <div className="flex flex-col items-center min-w-[120px]">
                           <span className="text-5xl font-bold text-yellow-700">4.5</span>
                           <div className="flex text-yellow-500 text-xl mb-1">
-                            {Array.from({length: 5}).map((_,i) => (
+                            {Array.from({ length: 5 }).map((_, i) => (
                               <span key={i}>{i < 4.5 ? '★' : '☆'}</span>
                             ))}
                           </div>
                           <span className="text-yellow-700 font-semibold text-sm">Xếp hạng khóa học</span>
                         </div>
                         <div className="flex-1">
-                          {[5,4,3,2,1].map((star, idx) => {
-                            const percents = [57,34,7,0,2];
+                          {[5, 4, 3, 2, 1].map((star, idx) => {
+                            const percents = [57, 34, 7, 0, 2];
                             return (
                               <div key={star} className="flex items-center gap-2 mb-1">
                                 <div className="w-2/3 h-2 bg-gray-200 rounded">
-                                  <div className="h-2 rounded bg-gray-400" style={{width: percents[idx] + '%'}}></div>
+                                  <div className="h-2 rounded bg-gray-400" style={{ width: percents[idx] + '%' }}></div>
                                 </div>
                                 <span className="text-yellow-500 text-sm ml-2">{'★'.repeat(star)}</span>
                                 <span className="text-purple-700 text-xs ml-2">{percents[idx]}%</span>
@@ -408,7 +407,7 @@ const VideoPlayerPage = () => {
                     <div className="mb-8 bg-gray-50 rounded-lg p-6 shadow flex flex-col gap-3">
                       <div className="font-semibold text-lg mb-2">Viết đánh giá của bạn</div>
                       <div className="flex items-center gap-2 mb-2">
-                        {[1,2,3,4,5].map(star => (
+                        {[1, 2, 3, 4, 5].map(star => (
                           <button
                             key={star}
                             type="button"
@@ -432,7 +431,7 @@ const VideoPlayerPage = () => {
                         className="self-end bg-purple-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-purple-700 transition"
                         onClick={() => {
                           if (!reviewInput.comment.trim()) return;
-                          setReviews([{ 
+                          setReviews([{
                             id: Date.now(),
                             user: 'Bạn',
                             rating: reviewInput.rating,
