@@ -688,7 +688,7 @@ const CourseDetail = () => {
       {/* Course Header - Dark mode style */}
       <div className="rounded-lg mb-8 p-8" style={{background: '#181822', color: '#fff'}}>
         <h1 className="text-3xl md:text-4xl font-bold mb-2 leading-tight">{course.title}</h1>
-        <div className="text-lg text-gray-200 mb-4">{course.description}</div>
+        <div className="text-lg text-gray-200 mb-4" dangerouslySetInnerHTML={{ __html: course.description }} />
         <div className="flex flex-wrap items-center gap-3 mb-3">
           <span className="bg-cyan-700 text-xs px-2 py-1 rounded font-semibold mr-2">Bán chạy nhất</span>
           <button 
@@ -801,7 +801,7 @@ const CourseDetail = () => {
           {/* Mô tả khóa học */}
           <div className="bg-white rounded-lg shadow p-8 mb-8">
             <h2 className="text-2xl font-bold mb-4">Mô tả khóa học</h2>
-            <div className="text-gray-700 text-base whitespace-pre-line">{course.description}</div>
+            <div className="text-gray-700 text-base" dangerouslySetInnerHTML={{ __html: course.description }} />
           </div>
           {/* Giảng viên */}
           <div className="bg-white rounded-lg shadow p-8 mb-8">

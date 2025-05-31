@@ -74,8 +74,13 @@ export default function Header() {
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-8">
           {/* Logo */}
-          <Link to="/" className="text-2xl font-bold text-purple-700">
-            Academy
+          <Link to="/" className="flex items-center space-x-2">
+            <img
+              src="/images/logo.webp"
+              alt="Academy Logo"
+              className="h-16 w-auto rounded-md"
+              style={{ maxHeight: '64px' }}
+            />
           </Link>
 
           {/* Thêm link Khóa học */}

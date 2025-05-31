@@ -55,9 +55,9 @@ const HomePage = () => {
   }, [user]);
 
   return (
-    <div>
+    <div className="container mx-auto px-4">
       {user && (
-        <div className="flex items-center gap-4 p-6">
+        <div className="flex flex-row items-center gap-4 p-6">
           <img
             src={user.imageUrl}
             alt={user.fullName}
@@ -69,29 +69,29 @@ const HomePage = () => {
           </div>
         </div>
       )}
-      <Slider />
+      <div className="w-full max-w-7xl mx-auto">
+        <Slider />
+      </div>
       {/* Recommended Courses Section */}
       <section className="py-12 bg-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold mb-8 text-center sm:text-left">
-            Các khóa học miễn phí
-          </h2>
-          {loading ? (
-            <div className="text-center py-8 text-gray-500">Đang tải...</div>
-          ) : error ? (
-            <div className="text-center py-8 text-red-500">{error}</div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {courses.length === 0 ? (
-                <div className="col-span-full text-center text-gray-500">Hiện chưa có khóa học miễn phí nào.</div>
-              ) : (
-                courses.map((course, index) => (
-                  <CourseCard key={course.id || index} {...course} />
-                ))
-              )}
-            </div>
-          )}
-        </div>
+        <h2 className="text-2xl font-bold mb-8 text-center sm:text-left">
+          Các khóa học miễn phí
+        </h2>
+        {loading ? (
+          <div className="text-center py-8 text-gray-500">Đang tải...</div>
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">{error}</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {courses.length === 0 ? (
+              <div className="col-span-full text-center text-gray-500">Hiện chưa có khóa học miễn phí nào.</div>
+            ) : (
+              courses.map((course, index) => (
+                <CourseCard key={course.id || index} {...course} />
+              ))
+            )}
+          </div>
+        )}
       </section>
 
       {/* Categories Section */}
