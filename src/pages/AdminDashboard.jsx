@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, Routes, Route } from 'react-router-dom';
+import { Link, Routes, Route, Navigate } from 'react-router-dom';
 import { Line, Doughnut, Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -14,6 +14,7 @@ import {
   Legend,
 } from 'chart.js';
 import '../assets/css/admin.css';
+import { useUserInfo } from '../contexts/UserContext';
 
 // Register ChartJS components
 ChartJS.register(
@@ -29,7 +30,13 @@ ChartJS.register(
 );
 
 const AdminDashboard = () => {
+  const { userInfo } = useUserInfo();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // Kiểm tra quyền truy cập
+  if (!userInfo || userInfo.role !== 'Admin') {
+    return <Navigate to="/" replace />;
+  }
 
   // Chart data for user growth
   const userGrowthData = {

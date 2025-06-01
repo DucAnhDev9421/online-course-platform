@@ -83,7 +83,7 @@ function TeachingPage() {
     const fetchCourses = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get('https://localhost:7261/api/courses');
+        const response = await axios.get(`https://localhost:7261/api/courses/instructor/${user?.id}`);
         if (response.data) {
           const formattedCourses = response.data.map(course => ({
             id: course.id,
@@ -112,7 +112,7 @@ function TeachingPage() {
     };
 
     fetchCourses();
-  }, []);
+  }, [user?.id]);
 
   const handleCreateCourse = async (e) => {
     e.preventDefault();

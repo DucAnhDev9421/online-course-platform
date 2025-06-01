@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Navigate } from 'react-router-dom';
 import axios from 'axios';
+import { useUserInfo } from '../contexts/UserContext';
 
 const statusColor = {
   approved: 'text-green-600',
@@ -9,10 +10,16 @@ const statusColor = {
 };
 
 const AdminCourseDetail = () => {
+  const { userInfo } = useUserInfo();
   const { id } = useParams();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Kiểm tra quyền truy cập
+  if (!userInfo || userInfo.role !== 'Admin') {
+    return <Navigate to="/" replace />;
+  }
 
   useEffect(() => {
     const fetchCourse = async () => {

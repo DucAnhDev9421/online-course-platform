@@ -14,6 +14,7 @@ export function UserProvider({ children }) {
         try {
           const response = await axios.get(`https://localhost:7261/api/users/${user.id}`);
           setUserInfo(response.data);
+          await axios.post(`https://localhost:7261/api/users/${user.id}/sync-role`);
         } catch (error) {
           console.error('Error fetching user information:', error);
         }

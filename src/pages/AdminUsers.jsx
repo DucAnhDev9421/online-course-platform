@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { Navigate } from 'react-router-dom';
+import { useUserInfo } from '../contexts/UserContext';
 
 const initialUsers = [
   { id: 1, name: 'Nguyễn Văn A', email: 'a@example.com', role: 'Học viên', avatar: 'https://randomuser.me/api/portraits/men/11.jpg', courses: 6, joined: '7 July, 2020' },
@@ -12,11 +14,17 @@ const initialUsers = [
 ];
 
 const AdminUsers = () => {
+  const { userInfo } = useUserInfo();
   const [users, setUsers] = useState(initialUsers);
   const [search, setSearch] = useState('');
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
   const [userTab, setUserTab] = useState('student'); // 'student' hoặc 'teacher'
+
+  // Kiểm tra quyền truy cập
+  if (!userInfo || userInfo.role !== 'Admin') {
+    return <Navigate to="/" replace />;
+  }
 
   const handleDeleteUser = (id) => {
     setUsers(users.filter(u => u.id !== id));
