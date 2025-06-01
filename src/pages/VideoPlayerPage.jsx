@@ -23,6 +23,7 @@ const VideoPlayerPage = () => {
   const [openSectionIds, setOpenSectionIds] = useState([]);
   const [reviewInput, setReviewInput] = useState({ rating: 5, comment: '' });
   const [reviews, setReviews] = useState([]);
+  const [reviewStats, setReviewStats] = useState(null);
 
   // Fetch course sections and lessons
   useEffect(() => {
@@ -96,6 +97,33 @@ const VideoPlayerPage = () => {
     const storedNotes = JSON.parse(localStorage.getItem(`notes_${courseId}_${lessonId}`) || '[]');
     setSavedNotes(storedNotes);
   }, [courseId, lessonId]);
+
+  // Fetch reviews for course
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await axios.get(`https://localhost:7261/api/Reviews?courseId=${courseId}`);
+        setReviews(res.data);
+      } catch (err) {
+        setReviews([]);
+      }
+    };
+    if (courseId) fetchReviews();
+  }, [courseId]);
+
+  // Fetch review stats for course
+  const fetchReviewStats = async () => {
+    try {
+      const res = await axios.get(`https://localhost:7261/api/Reviews/stats/${courseId}`);
+      setReviewStats(res.data);
+    } catch (err) {
+      setReviewStats(null);
+    }
+  };
+
+  useEffect(() => {
+    if (courseId) fetchReviewStats();
+  }, [courseId]);
 
   // Xử lý khi chọn bài học khác
   const handleLessonSelect = (lesson) => {
@@ -252,6 +280,49 @@ const VideoPlayerPage = () => {
   const isFirstLesson = currentIndex === 0;
   const isLastLesson = currentIndex === allLessons.length - 1;
 
+  // Gửi đánh giá mới
+  const handleSubmitReview = async () => {
+    if (!user) {
+      alert('Vui lòng đăng nhập để gửi đánh giá');
+      return;
+    }
+    if (!reviewInput.comment.trim()) return;
+    try {
+      const reviewData = {
+        userId: user.id,
+        courseId: parseInt(courseId),
+        ratingValue: reviewInput.rating,
+        comment: reviewInput.comment
+      };
+      const res = await axios.post('https://localhost:7261/api/Reviews', reviewData);
+      // Lấy lại danh sách đánh giá mới nhất
+      const reviewsRes = await axios.get(`https://localhost:7261/api/Reviews?courseId=${courseId}`);
+      setReviews(reviewsRes.data);
+      setReviewInput({ rating: 5, comment: '' });
+      fetchReviewStats();
+    } catch (err) {
+      alert('Không thể gửi đánh giá. Vui lòng thử lại.');
+    }
+  };
+
+  // Xóa đánh giá
+  const handleDeleteReview = async (reviewId) => {
+    if (!user) {
+      alert('Vui lòng đăng nhập để xóa đánh giá');
+      return;
+    }
+    if (!window.confirm('Bạn có chắc muốn xóa đánh giá này?')) return;
+    try {
+      await axios.delete(`https://localhost:7261/api/Reviews/${reviewId}`);
+      // Lấy lại danh sách đánh giá mới nhất
+      const reviewsRes = await axios.get(`https://localhost:7261/api/Reviews?courseId=${courseId}`);
+      setReviews(reviewsRes.data);
+      fetchReviewStats();
+    } catch (err) {
+      alert('Không thể xóa đánh giá. Vui lòng thử lại.');
+    }
+  };
+
   if (!currentLesson) {
     return (
       <div className="container mx-auto px-4 py-16">
@@ -338,7 +409,7 @@ const VideoPlayerPage = () => {
                       <h2 className="text-lg font-semibold mb-2 w-full">
                         {editingNoteId ? 'Chỉnh sửa ghi chú' : 'Thêm ghi chú mới'}
                       </h2>
-                      <div className="w-full" style={{ maxWidth: 700 }}>
+                      <div className="w-full relative" style={{ maxWidth: 700 }}>
                         <ReactQuill
                           value={notes}
                           onChange={setNotes}
@@ -355,23 +426,21 @@ const VideoPlayerPage = () => {
                           }}
                           style={{ height: 100 }}
                         />
-                        <div className="w-full flex justify-end mt-4">
-                          {editingNoteId && (
-                            <button
-                              onClick={handleCancelEdit}
-                              className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 mr-2"
-                            >
-                              Hủy
-                            </button>
-                          )}
+                        {editingNoteId && (
                           <button
-                            onClick={handleSaveNote}
-                            className="bg-purple-600 text-white px-6 py-2 rounded-md hover:bg-purple-700 font-semibold"
-                            style={{ minWidth: 120 }}
+                            onClick={handleCancelEdit}
+                            className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 absolute right-36 bottom-4"
                           >
-                            {editingNoteId ? 'Cập nhật' : 'Lưu ghi chú'}
+                            Hủy
                           </button>
-                        </div>
+                        )}
+                        <button
+                          onClick={handleSaveNote}
+                          className="bg-purple-600 text-white px-6 py-2 rounded-md hover:bg-purple-700 font-semibold absolute right-4 bottom-4"
+                          style={{ minWidth: 120 }}
+                        >
+                          {editingNoteId ? 'Cập nhật' : 'Lưu ghi chú'}
+                        </button>
                       </div>
                     </div>
 
@@ -436,31 +505,50 @@ const VideoPlayerPage = () => {
                     {/* Tổng quan đánh giá */}
                     <div className="mb-8">
                       <h2 className="text-2xl font-bold mb-4">Phản hồi của học viên</h2>
-                      <div className="flex items-center gap-8">
-                        <div className="flex flex-col items-center min-w-[120px]">
-                          <span className="text-5xl font-bold text-yellow-700">4.5</span>
-                          <div className="flex text-yellow-500 text-xl mb-1">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <span key={i}>{i < 4.5 ? '★' : '☆'}</span>
-                            ))}
+                      {reviewStats ? (
+                        <div className="flex items-center gap-8">
+                          <div className="flex flex-col items-center min-w-[120px]">
+                            <span className="text-5xl font-bold text-yellow-700">{reviewStats.averageRating?.toFixed(1) || 0}</span>
+                            <div className="flex text-yellow-500 text-xl mb-1">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <span key={i}>{i < Math.round(reviewStats.averageRating) ? '★' : '☆'}</span>
+                              ))}
+                            </div>
+                            <span className="text-yellow-700 font-semibold text-sm">Xếp hạng khóa học</span>
+                            <span className="text-gray-500 text-xs mt-1">{reviewStats.totalRatings} đánh giá</span>
                           </div>
-                          <span className="text-yellow-700 font-semibold text-sm">Xếp hạng khóa học</span>
-                        </div>
-                        <div className="flex-1">
-                          {[5, 4, 3, 2, 1].map((star, idx) => {
-                            const percents = [57, 34, 7, 0, 2];
-                            return (
-                              <div key={star} className="flex items-center gap-2 mb-1">
-                                <div className="w-2/3 h-2 bg-gray-200 rounded">
-                                  <div className="h-2 rounded bg-gray-400" style={{ width: percents[idx] + '%' }}></div>
+                          <div className="flex-1">
+                            {[5, 4, 3, 2, 1].map((star) => {
+                              const percent = reviewStats.totalRatings > 0
+                                ? (reviewStats.ratingDistribution[
+                                    star === 5 ? 'fiveStars' :
+                                    star === 4 ? 'fourStars' :
+                                    star === 3 ? 'threeStars' :
+                                    star === 2 ? 'twoStars' : 'oneStar'
+                                  ] / reviewStats.totalRatings) * 100
+                                : 0;
+                              return (
+                                <div key={star} className="flex items-center gap-2 mb-1">
+                                  <div className="w-2/3 h-2 bg-gray-200 rounded">
+                                    <div className="h-2 rounded bg-gray-400" style={{ width: percent + '%' }}></div>
+                                  </div>
+                                  <span className="text-yellow-500 text-sm ml-2">{'★'.repeat(star)}</span>
+                                  <span className="text-purple-700 text-xs ml-2">
+                                    {reviewStats.ratingDistribution[
+                                      star === 5 ? 'fiveStars' :
+                                      star === 4 ? 'fourStars' :
+                                      star === 3 ? 'threeStars' :
+                                      star === 2 ? 'twoStars' : 'oneStar'
+                                    ]}
+                                  </span>
                                 </div>
-                                <span className="text-yellow-500 text-sm ml-2">{'★'.repeat(star)}</span>
-                                <span className="text-purple-700 text-xs ml-2">{percents[idx]}%</span>
-                              </div>
-                            )
-                          })}
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="text-gray-500">Không có thống kê đánh giá</div>
+                      )}
                     </div>
                     {/* Form nhập đánh giá mới */}
                     <div className="mb-8 bg-gray-50 rounded-lg p-6 shadow flex flex-col gap-3">
@@ -488,60 +576,41 @@ const VideoPlayerPage = () => {
                       />
                       <button
                         className="self-end bg-purple-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-purple-700 transition"
-                        onClick={() => {
-                          if (!reviewInput.comment.trim()) return;
-                          setReviews([{
-                            id: Date.now(),
-                            user: 'Bạn',
-                            rating: reviewInput.rating,
-                            comment: reviewInput.comment,
-                            date: new Date().toISOString(),
-                            avatar: null
-                          }, ...reviews]);
-                          setReviewInput({ rating: 5, comment: '' });
-                        }}
+                        onClick={handleSubmitReview}
                       >
                         Gửi đánh giá
                       </button>
                     </div>
                     {/* Danh sách đánh giá */}
                     <div className="space-y-8">
-                      {/* Đánh giá 1 */}
-                      <div className="flex gap-4 border-b pb-6">
-                        <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="avatar" className="w-12 h-12 rounded-full object-cover" />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold">Phan Thế A.</span>
-                            <div className="flex text-yellow-500 text-base">{'★'.repeat(5)}</div>
-                            <span className="text-gray-500 text-sm ml-2">1 tháng trước</span>
-                          </div>
-                          <div className="mb-2">Very good!</div>
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <span>Đánh giá này có hữu ích không?</span>
-                            <button className="flex items-center border rounded-full px-3 py-1 text-purple-700 hover:bg-purple-50"><svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 9l-3 3m0 0l-3-3m3 3V4m0 16v-7" /></svg>Like</button>
-                            <button className="flex items-center border rounded-full px-3 py-1 text-purple-700 hover:bg-purple-50"><svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 15l3-3m0 0l3 3m-3-3v7m0-16v7" /></svg>Dislike</button>
-                            <button className="text-purple-700 underline ml-2">Báo cáo</button>
-                          </div>
-                        </div>
-                      </div>
-                      {/* Đánh giá 2 */}
-                      <div className="flex gap-4 border-b pb-6">
-                        <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold text-lg">TL</div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold">Truong Thi Hien L.</span>
-                            <div className="flex text-yellow-500 text-base">{'★'.repeat(5)}</div>
-                            <span className="text-gray-500 text-sm ml-2">3 tháng trước</span>
-                          </div>
-                          <div className="mb-2">Tuyệt vời, trên cả mong đợi!</div>
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <span>Đánh giá này có hữu ích không?</span>
-                            <button className="flex items-center border rounded-full px-3 py-1 text-purple-700 hover:bg-purple-50"><svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 9l-3 3m0 0l-3-3m3 3V4m0 16v-7" /></svg>Like</button>
-                            <button className="flex items-center border rounded-full px-3 py-1 text-purple-700 hover:bg-purple-50"><svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 15l3-3m0 0l3 3m-3-3v7m0-16v7" /></svg>Dislike</button>
-                            <button className="text-purple-700 underline ml-2">Báo cáo</button>
+                      {reviews.length === 0 && <div className="text-gray-500">Chưa có đánh giá nào</div>}
+                      {reviews.map((review) => (
+                        <div key={review.id} className="flex gap-4 border-b pb-6">
+                          {review.imageUrl ? (
+                            <img src={review.imageUrl} alt="avatar" className="w-12 h-12 rounded-full object-cover" />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold text-lg">
+                              {review.firstName ? review.firstName.charAt(0) : '?'}
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-semibold">{review.firstName || 'Ẩn danh'}</span>
+                              <div className="flex text-yellow-500 text-base">{'★'.repeat(review.ratingValue)}</div>
+                              {/* Có thể thêm ngày nếu API trả về */}
+                              {user && review.userId === user.id && (
+                                <button
+                                  onClick={() => handleDeleteReview(review.id)}
+                                  className="ml-4 text-red-600 hover:underline text-sm"
+                                >
+                                  Xóa
+                                </button>
+                              )}
+                            </div>
+                            <div className="mb-2">{review.comment}</div>
                           </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
                   </div>
                 )}
