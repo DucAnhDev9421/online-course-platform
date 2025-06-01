@@ -80,10 +80,13 @@ export default function Cart() {
     }
   };
 
+  // Calculate total price
+  const totalPrice = cartCourses.reduce((sum, item) => sum + (item.course.price || 0), 0);
+
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center bg-gradient-to-br from-white to-purple-50 py-12 px-2">
-      <div className="w-full max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-center text-purple-700 drop-shadow">Giỏ hàng</h1>
+      <div className="w-full max-w-6xl mx-auto">
+        <h1 className="text-4xl font-extrabold mb-8 text-left text-gray-800">Giỏ hàng</h1>
         {cartCourses.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 bg-white rounded-xl shadow-lg">
             <svg className="mb-6 w-24 h-24 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,29 +96,76 @@ export default function Cart() {
             <Link to="/courses" className="mt-4 px-6 py-2 bg-purple-600 text-white rounded-lg shadow hover:bg-purple-700 transition font-semibold">Khám phá khóa học</Link>
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div className="text-gray-700 text-lg font-semibold">Tổng số khóa học: <span className="text-purple-700">{cartCourses.length}</span></div>
-              <Link to="/courses" className="text-purple-600 hover:underline text-sm">+ Thêm khóa học khác</Link>
-            </div>
-            <ul className="divide-y divide-gray-100">
-              {cartCourses.map(item => (
-                <li key={item.cartItemId} className="flex flex-col sm:flex-row items-center gap-4 py-6">
-                  <img src={item.course.imageUrl || '/default-course.png'} alt={item.course.name} className="w-28 h-20 object-cover rounded-lg shadow" />
-                  <div className="flex-1 w-full">
-                    <div className="font-bold text-lg text-gray-800 cursor-pointer hover:text-purple-700 transition" onClick={() => handleGoToCourse(item.courseId)}>{item.course.name}</div>
-                    <div className="text-gray-500 text-sm mb-1">{item.course.category}</div>
-                    <div className="text-purple-600 font-semibold text-base">
-                      {item.course.price === 0 ? 'Miễn phí' : item.course.price?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+          <div className="flex flex-col md:flex-row gap-8">
+            {/* LEFT: Course List */}
+            <div className="flex-1 bg-white rounded-xl shadow-lg p-8">
+              <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="text-gray-700 text-base font-semibold">
+                  {cartCourses.length} khóa học trong giỏ hàng
+                </div>
+              </div>
+              <ul className="divide-y divide-gray-100">
+                {cartCourses.map(item => (
+                  <li key={item.cartItemId} className="flex flex-row items-center gap-6 py-6">
+                    <img src={item.course.imageUrl || '/default-course.png'} alt={item.course.name} className="w-28 h-20 object-cover rounded-lg shadow border" />
+                    <div className="flex-1 w-full">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <div className="font-bold text-lg text-gray-800 cursor-pointer hover:text-purple-700 transition" onClick={() => handleGoToCourse(item.courseId)}>{item.course.name}</div>
+                          <div className="flex items-center gap-2 mt-1 mb-1">
+                            <span className="text-sm text-gray-500">Bởi {item.course.instructor.name}</span>
+                            {/* Badge bán chạy nhất */}
+                            <span className="ml-2 bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded">Bán chạy nhất</span>
+                          </div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-yellow-500 font-bold text-base flex items-center">
+                              {item.course.rating > 0 ? (
+                                <>
+                                  {item.course.rating.toFixed(1)}
+                                  <span className="ml-1">★</span>
+                                </>
+                              ) : 'Chưa có đánh giá'}
+                            </span>
+                            {item.course.totalRatings > 0 && (
+                              <span className="text-xs text-gray-500">({item.course.totalRatings.toLocaleString('vi-VN')} xếp hạng)</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                            <span>Tổng số {Math.round(item.course.totalDuration / 60 * 10) / 10} giờ</span>
+                            <span>•</span>
+                            <span>{item.course.totalLessons} bài giảng</span>
+                            <span>•</span>
+                            <span>{item.course.level}</span>
+                          </div>
+                          <div className="flex gap-4 mt-2">
+                            <button className="text-purple-600 text-sm hover:underline">Lưu để mua sau</button>
+                            <button className="text-purple-600 text-sm hover:underline">Chuyển vào danh sách mong ước</button>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-2 min-w-[120px]">
+                          <button onClick={() => handleRemove(item.courseId)} className="text-purple-600 text-sm hover:underline">Xóa</button>
+                          <div className="text-xl font-bold text-purple-700 flex items-center gap-1">
+                            {item.course.price === 0 ? 'Miễn phí' : item.course.price?.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+                            <span className="ml-1">{item.course.price > 0 && <span className="inline-block align-middle">🏷️</span>}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <button onClick={() => handleRemove(item.courseId)} className="ml-0 sm:ml-4 px-4 py-2 text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition font-semibold">Xóa</button>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-10 flex flex-col sm:flex-row justify-end gap-4">
-              <button className="bg-purple-700 text-white px-8 py-3 rounded-lg font-bold text-lg shadow hover:bg-purple-800 transition">Thanh toán</button>
-              <button onClick={handleClearCart} className="bg-red-100 text-red-600 px-8 py-3 rounded-lg font-bold text-lg shadow hover:bg-red-200 transition border border-red-200">Xóa giỏ hàng</button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {/* RIGHT: Total & Checkout */}
+            <div className="w-full md:w-80 flex-shrink-0">
+              <div className="bg-white rounded-xl shadow-lg p-8 flex flex-col items-start">
+                <div className="text-lg font-semibold text-gray-700 mb-2">Tổng:</div>
+                <div className="text-3xl font-extrabold text-gray-900 mb-6">{totalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}</div>
+                <button className="w-full bg-purple-700 text-white px-8 py-3 rounded-lg font-bold text-lg shadow hover:bg-purple-800 transition mb-2 flex items-center justify-center gap-2">
+                  Tiến hành thanh toán <span className="text-2xl">→</span>
+                </button>
+                <div className="text-xs text-gray-500 mt-1">Bạn sẽ không bị tính phí ngay bây giờ</div>
+                <button onClick={handleClearCart} className="w-full mt-4 bg-red-100 text-red-600 px-8 py-3 rounded-lg font-bold text-lg shadow hover:bg-red-200 transition border border-red-200">Xóa giỏ hàng</button>
+              </div>
             </div>
           </div>
         )}
