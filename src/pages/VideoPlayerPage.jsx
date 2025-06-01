@@ -4,8 +4,10 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import ReactPlayer from 'react-player';
 import axios from 'axios';
+import { useUser } from "@clerk/clerk-react";
 
 const VideoPlayerPage = () => {
+  const { user } = useUser();
   const { courseId, lessonId } = useParams();
   const navigate = useNavigate();
   const [currentLesson, setCurrentLesson] = useState(null);
@@ -118,24 +120,63 @@ const VideoPlayerPage = () => {
     }
   };
 
-  const handleSaveNote = () => {
+  const handleSaveNote = async () => {
     if (!notes || notes === '<p><br></p>') return;
-    const newNote = {
-      id: editingNoteId || Date.now(),
-      content: notes,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    let updatedNotes;
-    if (editingNoteId) {
-      updatedNotes = savedNotes.map(note => note.id === editingNoteId ? newNote : note);
-    } else {
-      updatedNotes = [...savedNotes, newNote];
+    
+    try {
+      if (!user) {
+        alert('Vui lòng đăng nhập để lưu ghi chú');
+        return;
+      }
+
+      const noteData = {
+        title: currentLesson.title,
+        content: notes,
+        userId: user.id,
+        lessonId: parseInt(lessonId)
+      };
+
+      let response;
+      if (editingNoteId) {
+        // Update existing note
+        response = await axios.put(`https://localhost:7261/api/notes/${editingNoteId}`, noteData);
+      } else {
+        // Create new note
+        response = await axios.post('https://localhost:7261/api/notes', noteData);
+      }
+      
+      const newNote = {
+        id: response.data.id,
+        content: notes,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      let updatedNotes;
+      if (editingNoteId) {
+        updatedNotes = savedNotes.map(note => note.id === editingNoteId ? newNote : note);
+      } else {
+        updatedNotes = [...savedNotes, newNote];
+      }
+      
+      setSavedNotes(updatedNotes);
+      localStorage.setItem(`notes_${courseId}_${lessonId}`, JSON.stringify(updatedNotes));
+      setNotes('');
+      setEditingNoteId(null);
+    } catch (error) {
+      console.error('Error saving note:', error);
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        alert(`Lỗi: ${error.response.data.message || 'Không thể lưu ghi chú'}`);
+      } else if (error.request) {
+        // The request was made but no response was received
+        alert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối của bạn.');
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        alert('Đã xảy ra lỗi khi lưu ghi chú. Vui lòng thử lại.');
+      }
     }
-    setSavedNotes(updatedNotes);
-    localStorage.setItem(`notes_${courseId}_${lessonId}`, JSON.stringify(updatedNotes));
-    setNotes('');
-    setEditingNoteId(null);
   };
 
   const handleEditNote = (note) => {
@@ -143,10 +184,28 @@ const VideoPlayerPage = () => {
     setEditingNoteId(note.id);
   };
 
-  const handleDeleteNote = (noteId) => {
-    const updatedNotes = savedNotes.filter(note => note.id !== noteId);
-    setSavedNotes(updatedNotes);
-    localStorage.setItem(`notes_${courseId}_${lessonId}`, JSON.stringify(updatedNotes));
+  const handleDeleteNote = async (noteId) => {
+    try {
+      if (!user) {
+        alert('Vui lòng đăng nhập để xóa ghi chú');
+        return;
+      }
+
+      await axios.delete(`https://localhost:7261/api/notes/${noteId}?userId=${user.id}`);
+      
+      const updatedNotes = savedNotes.filter(note => note.id !== noteId);
+      setSavedNotes(updatedNotes);
+      localStorage.setItem(`notes_${courseId}_${lessonId}`, JSON.stringify(updatedNotes));
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      if (error.response) {
+        alert(`Lỗi: ${error.response.data.message || 'Không thể xóa ghi chú'}`);
+      } else if (error.request) {
+        alert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối của bạn.');
+      } else {
+        alert('Đã xảy ra lỗi khi xóa ghi chú. Vui lòng thử lại.');
+      }
+    }
   };
 
   const handleCancelEdit = () => {
