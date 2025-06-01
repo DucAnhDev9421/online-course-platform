@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import '../assets/css/admin.css';
+import { useUser } from "@clerk/clerk-react";
 
 const AdminLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [openCourses, setOpenCourses] = useState(true);
   const location = useLocation();
+  const { user } = useUser();
 
   const isCoursesActive = location.pathname.startsWith('/admin/courses');
 
@@ -101,16 +103,18 @@ const AdminLayout = ({ children }) => {
                   3
                 </span>
               </button>
-              <div className="relative">
-                <button className="flex items-center text-gray-500 hover:text-gray-700 admin-button">
-                  <img
-                    className="h-8 w-8 rounded-full object-cover ring-2 ring-blue-500"
-                    src="https://via.placeholder.com/32"
-                    alt="User avatar"
-                  />
-                  <span className="ml-2">Admin User</span>
-                </button>
-              </div>
+              {user && (
+                <div className="relative">
+                  <button className="flex items-center text-gray-500 hover:text-gray-700 admin-button">
+                    <img
+                      className="h-8 w-8 rounded-full object-cover ring-2 ring-blue-500"
+                      src={user.imageUrl || user.image_url}
+                      alt="User avatar"
+                    />
+                    <span className="ml-2">{user.firstName || user.first_name}</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </header>

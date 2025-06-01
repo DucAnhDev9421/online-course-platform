@@ -56,6 +56,7 @@ function TeachingPage() {
   const [editingLecture, setEditingLecture] = useState({ id: null, sectionId: null, title: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null);
 
   // Load categories when component mounts
   useEffect(() => {
@@ -365,6 +366,11 @@ function TeachingPage() {
     }
   };
 
+  const handleDeleteCourse = (courseId) => {
+    setCourses(courses.filter(c => c.id !== courseId));
+    toast.success('Đã xóa khóa học!');
+  };
+
   // Render stepper
   const renderStepper = () => (
     <div className="flex items-center justify-between bg-white rounded-lg px-6 py-4 mb-8 shadow">
@@ -632,20 +638,17 @@ function TeachingPage() {
 
           {sidebarTab === 'courses' && (
             <>
-              <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold">Quản lý khóa học</h1>
-                {!showCreateForm && (
-                  <button
-                    onClick={() => setShowCreateForm(true)}
-                    className="bg-purple-600 text-white px-6 py-2 rounded-md hover:bg-purple-700 shadow-md transition"
-                  >
-                    Tạo khóa học mới
-                  </button>
-                )}
-              </div>
-
               {showCreateForm ? (
                 <>
+                  <div className="flex items-center mb-6">
+                    <button
+                      onClick={() => setShowCreateForm(false)}
+                      className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md shadow-sm border border-gray-300 font-semibold"
+                    >
+                      <i className="fas fa-arrow-left"></i>
+                      Quay lại danh sách
+                    </button>
+                  </div>
                   {renderStepper()}
                   {step === 0 && renderStep1()}
                   {step === 1 && renderStep2()}
@@ -654,46 +657,114 @@ function TeachingPage() {
                 </>
               ) : (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {courses.map((course) => (
-                      <div key={course.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
-                        <img
-                          src={course.image}
-                          alt={course.name}
-                          className="w-full h-48 object-cover"
-                        />
-                        <div className="p-4">
-                          <h2 className="text-xl font-semibold mb-2">{course.name}</h2>
-                          <p className="text-gray-600 mb-4 line-clamp-2">{course.description}</p>
-                          <div className="flex justify-between items-center">
-                            <span className="text-purple-600 font-medium">
-                              {course.price === 0 ? 'Miễn phí' : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(course.price)}
-                            </span>
-                            <Link
-                              to={`/teaching/courses/${course.id}`}
-                              className="text-blue-600 hover:text-blue-700"
-                            >
-                              Quản lý
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+                    <h1 className="text-3xl font-bold">Khóa học</h1>
+                    <button
+                      onClick={() => setShowCreateForm(true)}
+                      className="bg-purple-600 text-white px-6 py-2 rounded-md hover:bg-purple-700 shadow-md transition flex items-center gap-2 self-end md:self-auto"
+                    >
+                      <i className="fas fa-plus"></i> Thêm khóa học mới
+                    </button>
                   </div>
-
-                  {courses.length === 0 && (
-                    <div className="flex items-center justify-between bg-white rounded-lg shadow p-8 mt-8" style={{ minHeight: 120 }}>
-                      <div className="text-xl font-medium text-gray-700">
-                        Bắt đầu tạo khóa học
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                    <input
+                      type="text"
+                      placeholder="Tìm kiếm khóa học của bạn"
+                      className="border border-gray-300 rounded-lg px-4 py-2 w-full md:w-1/3 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      // onChange={...} // Có thể thêm logic tìm kiếm nếu muốn
+                    />
+                    <select className="border border-gray-300 rounded-lg px-4 py-2 w-full md:w-48 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                      <option>Sắp xếp theo</option>
+                      <option value="name">Tên khóa học</option>
+                      <option value="students">Số học viên</option>
+                      <option value="rating">Đánh giá</option>
+                      <option value="status">Trạng thái</option>
+                    </select>
+                  </div>
+                  <div className="bg-white rounded-xl shadow overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Khóa học</th>
+                          <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase">Học viên</th>
+                          <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase">Đánh giá</th>
+                          <th className="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase">Trạng thái</th>
+                          <th className="px-6 py-3"></th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-100">
+                        {courses.map((course) => (
+                          <tr key={course.id} className="hover:bg-gray-50 transition">
+                            <td className="px-6 py-4 flex items-center gap-4 min-w-[320px]">
+                              <img src={course.image} alt={course.name} className="w-16 h-16 rounded-lg object-cover border shadow" />
+                              <div>
+                                <div className="font-semibold text-base text-gray-900 line-clamp-1">{course.name}</div>
+                                <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
+                                  <span><i className="fas fa-clock mr-1"></i>1h 30m</span>
+                                  <span><i className="fas fa-signal mr-1"></i>{course.level === 1 ? 'Cơ bản' : course.level === 2 ? 'Trung cấp' : course.level === 3 ? 'Nâng cao' : 'Không xác định'}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-center font-semibold text-gray-700">{course.students?.toLocaleString('vi-VN') || '0'}</td>
+                            <td className="px-6 py-4 text-center">
+                              <span className="font-bold text-yellow-500">4.5</span>
+                              <i className="fas fa-star text-yellow-400 ml-1"></i>
+                              <span className="text-xs text-gray-500 ml-1">(3,250)</span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                              {course.status === 1 ? (
+                                <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">Đang hoạt động</span>
+                              ) : (
+                                <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">Bản nháp</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 text-right relative">
+                              <div className="inline-block text-left">
+                                <button
+                                  className="text-gray-400 hover:text-purple-600 text-xl focus:outline-none"
+                                  onClick={() => setOpenDropdown(openDropdown === course.id ? null : course.id)}
+                                >
+                                  <i className="fas fa-ellipsis-v"></i>
+                                </button>
+                                {openDropdown === course.id && (
+                                  <div
+                                    className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-20"
+                                    onMouseLeave={() => setOpenDropdown(null)}
+                                  >
+                                    <button
+                                      className="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700 rounded-t-lg"
+                                      onClick={() => { setOpenDropdown(null); window.location.href = `/teaching/courses/${course.id}`; }}
+                                    >
+                                      <i className="fas fa-edit mr-2 text-purple-500"></i> Chỉnh sửa
+                                    </button>
+                                    <button
+                                      className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600 rounded-b-lg"
+                                      onClick={() => { setOpenDropdown(null); handleDeleteCourse(course.id); }}
+                                    >
+                                      <i className="fas fa-trash mr-2"></i> Xóa khóa học
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {courses.length === 0 && (
+                      <div className="flex items-center justify-between bg-white rounded-lg shadow p-8 mt-8" style={{ minHeight: 120 }}>
+                        <div className="text-xl font-medium text-gray-700">
+                          Chưa có khóa học nào, hãy bắt đầu tạo khóa học mới!
+                        </div>
+                        <button
+                          onClick={() => setShowCreateForm(true)}
+                          className="bg-purple-600 text-white px-8 py-3 rounded-md font-semibold hover:bg-purple-700 transition-colors shadow-md"
+                        >
+                          Thêm khóa học mới
+                        </button>
                       </div>
-                      <button
-                        onClick={() => setShowCreateForm(true)}
-                        className="bg-purple-600 text-white px-8 py-3 rounded-md font-semibold hover:bg-purple-700 transition-colors shadow-md"
-                      >
-                        Tạo khóa học của bạn
-                      </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </>
               )}
             </>

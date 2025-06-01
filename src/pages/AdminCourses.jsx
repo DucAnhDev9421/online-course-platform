@@ -8,6 +8,7 @@ import { FaEllipsisV } from 'react-icons/fa';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useUser } from '@clerk/clerk-react';
+import { Link } from "react-router-dom";
 
 const COURSE_LEVELS = [
   { value: '', label: 'Chọn trình độ' },
@@ -66,6 +67,8 @@ const AdminCourses = () => {
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   const { user } = useUser();
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterLevel, setFilterLevel] = useState('');
 
   // Thêm useEffect để lấy danh sách danh mục khi component mount
   useEffect(() => {
@@ -281,9 +284,14 @@ const AdminCourses = () => {
     return <span className="flex items-center text-gray-600"><span className="h-2 w-2 rounded-full bg-gray-400 mr-2"></span>Không xác định</span>;
   };
 
+  // Lọc nâng cao
   const filteredCourses = courses.filter(c => {
-    if (tab === 'all') return c.name.toLowerCase().includes(search.toLowerCase());
-    return c.status === tab && c.name.toLowerCase().includes(search.toLowerCase());
+    let match = true;
+    if (tab !== 'all') match = match && c.status === tab;
+    if (search) match = match && c.name.toLowerCase().includes(search.toLowerCase());
+    if (filterCategory) match = match && String(c.categoryId) === String(filterCategory);
+    if (filterLevel) match = match && String(c.level) === String(filterLevel);
+    return match;
   });
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -768,6 +776,37 @@ const AdminCourses = () => {
           <i className="fas fa-plus mr-2"></i> Thêm khóa học mới
         </button>
       </div>
+      {/* Bộ lọc nâng cao */}
+      <div className="flex flex-wrap gap-4 mb-4">
+        <select
+          className="border rounded px-3 py-2 min-w-[160px]"
+          value={filterCategory}
+          onChange={e => setFilterCategory(e.target.value)}
+        >
+          <option value="">Tất cả danh mục</option>
+          {categories.map(cat => (
+            <option key={cat.id} value={cat.id}>{cat.name}</option>
+          ))}
+        </select>
+        <select
+          className="border rounded px-3 py-2 min-w-[140px]"
+          value={filterLevel}
+          onChange={e => setFilterLevel(e.target.value)}
+        >
+          <option value="">Tất cả trình độ</option>
+          {COURSE_LEVELS.filter(lv => lv.value).map(lv => (
+            <option key={lv.value} value={lv.value === 'beginner' ? 1 : lv.value === 'intermediate' ? 2 : 3}>{lv.label}</option>
+          ))}
+        </select>
+        {(filterCategory || filterLevel) && (
+          <button
+            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+            onClick={() => { setFilterCategory(''); setFilterLevel(''); }}
+          >
+            Xóa lọc
+          </button>
+        )}
+      </div>
       {showAddForm ? (
         <>
           {renderStepper()}
@@ -826,13 +865,17 @@ const AdminCourses = () => {
                     return (
                       <tr key={course.id} className="border-t hover:bg-gray-50">
                         <td className="py-3 px-4">
-                          <div className="flex items-center space-x-3">
-                            <img src={course.image} alt="thumb" className="w-14 h-14 rounded-lg object-cover" />
+                          <Link
+                            to={`/admin/courses/${course.id}`}
+                            className="flex items-center space-x-3 group cursor-pointer"
+                            style={{ textDecoration: 'none', color: 'inherit' }}
+                          >
+                            <img src={course.image} alt="thumb" className="w-14 h-14 rounded-lg object-cover group-hover:opacity-80 transition" />
                             <div>
-                              <div className="font-semibold text-gray-900 truncate max-w-xs">{course.name}</div>
+                              <div className="font-semibold text-gray-900 truncate max-w-xs group-hover:text-purple-700 transition">{course.name}</div>
                               <div className="text-xs text-gray-500">Thêm ngày {course.date}</div>
                             </div>
-                          </div>
+                          </Link>
                         </td>
                         <td className="py-3 px-4 align-top">
                           {course.instructor ? (

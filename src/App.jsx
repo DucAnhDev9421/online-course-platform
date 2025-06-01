@@ -24,6 +24,7 @@ import Cart from './pages/Cart';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { UserProvider } from './contexts/UserContext';
+import AdminCourseDetail from './pages/AdminCourseDetail';
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -92,6 +93,7 @@ function AppLayout() {
           }>
             <Route index element={<AdminDashboard />} />
             <Route path="courses" element={<AdminCourses />} />
+            <Route path="courses/:id" element={<AdminCourseDetail />} />
             <Route path="courses/categories" element={<AdminCategories />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="*" element={<AdminDashboard />} />

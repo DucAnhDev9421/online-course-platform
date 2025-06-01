@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUser, useClerk } from '@clerk/clerk-react';
 import { FaUser, FaKey, FaTachometerAlt, FaSignOutAlt } from 'react-icons/fa';
+import axios from 'axios';
 
 export default function Header() {
   const location = useLocation();
@@ -12,26 +13,7 @@ export default function Header() {
   const [cartCourses, setCartCourses] = useState([]);
   const { user, isSignedIn } = useUser();
   const { signOut } = useClerk();
-
-  // Danh sách categories và subcategories
-  const categories = [
-    {
-      name: 'Phát triển',
-      subcategories: ['Lập trình web', 'Mobile', 'Game', 'Data Science']
-    },
-    {
-      name: 'Kinh doanh',
-      subcategories: ['Khởi nghiệp', 'Quản lý', 'Bán hàng', 'Chiến lược']
-    },
-    {
-      name: 'IT và Phần mềm',
-      subcategories: ['An ninh mạng', 'Hệ thống', 'DevOps', 'Cloud Computing']
-    },
-    {
-      name: 'Marketing',
-      subcategories: ['Digital Marketing', 'SEO', 'Social Media', 'Content Marketing']
-    }
-  ];
+  const [categories, setCategories] = useState([]);
 
   // Load danh sách khóa học yêu thích từ localStorage
   useEffect(() => {
@@ -48,6 +30,19 @@ export default function Header() {
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem('cartCourses') || '[]');
     setCartCourses(stored);
+  }, []);
+
+  // Gọi API lấy danh mục khi load header
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get('https://localhost:7261/api/categories');
+        setCategories(res.data || []);
+      } catch (e) {
+        setCategories([]);
+      }
+    };
+    fetchCategories();
   }, []);
 
   // Đóng tất cả dropdown khi click bên ngoài
@@ -92,9 +87,7 @@ export default function Header() {
           </Link>
 
           {/* Nút Danh mục */}
-          <div
-            className="relative hidden md:block dropdown"
-          >
+          <div className="relative hidden md:block dropdown">
             <button
               className="font-medium hover:text-purple-700 flex items-center"
               onClick={() => setShowCategories((prev) => !prev)}
@@ -114,44 +107,20 @@ export default function Header() {
                 />
               </svg>
             </button>
-
-            {/* Dropdown menu */}
+            {/* Dropdown menu lấy từ API */}
             {showCategories && (
               <div className="absolute left-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
-                {categories.map((category, index) => (
-                  <div key={index} className="group relative">
-                    <a
-                      href="#"
-                      className="block px-4 py-2 text-gray-800 hover:bg-gray-100 flex justify-between items-center"
-                    >
-                      {category.name}
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4 text-gray-500"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </a>
-
-                    {/* Submenu */}
-                    <div className="absolute left-full top-0 ml-1 hidden group-hover:block w-64 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
-                      {category.subcategories.map((sub, i) => (
-                        <a
-                          key={i}
-                          href="#"
-                          className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
-                        >
-                          {sub}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
+                {categories.length === 0 && (
+                  <div className="px-4 py-2 text-gray-400">Không có danh mục</div>
+                )}
+                {categories.map((category) => (
+                  <Link
+                    key={category.id}
+                    to={`/courses?category=${category.id}`}
+                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
+                  >
+                    {category.name}
+                  </Link>
                 ))}
               </div>
             )}
