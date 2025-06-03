@@ -6,10 +6,12 @@ import { useUser } from "@clerk/clerk-react";
 const AdminLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [openCourses, setOpenCourses] = useState(true);
+  const [openUsers, setOpenUsers] = useState(true);
   const location = useLocation();
   const { user } = useUser();
 
   const isCoursesActive = location.pathname.startsWith('/admin/courses');
+  const isUsersActive = location.pathname.startsWith('/admin/users');
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -59,13 +61,36 @@ const AdminLayout = ({ children }) => {
             )}
           </div>
 
-          <Link to="/admin/users" className="nav-link flex items-center px-4 py-2 text-white hover:bg-white/10">
-            <i className="fas fa-users mr-3"></i>
-            <span className={!isSidebarOpen && 'hidden'}>Người dùng</span>
-          </Link>
-          <Link to="/admin/settings" className="nav-link flex items-center px-4 py-2 text-white hover:bg-white/10">
-            <i className="fas fa-cog mr-3"></i>
-            <span className={!isSidebarOpen && 'hidden'}>Cài đặt</span>
+          <div>
+            <button
+              className={`nav-link flex items-center px-4 py-2 w-full text-left text-white hover:bg-white/10 ${isUsersActive ? 'font-bold bg-white/10' : ''}`}
+              onClick={() => setOpenUsers(!openUsers)}
+            >
+              <i className="fas fa-users mr-3"></i>
+              <span className={!isSidebarOpen && 'hidden'}>Người dùng</span>
+              <i className={`fas ml-auto transition-transform ${openUsers ? 'fa-chevron-down' : 'fa-chevron-right'} ${!isSidebarOpen && 'hidden'}`}></i>
+            </button>
+            {openUsers && isSidebarOpen && (
+              <div className="ml-8">
+                <Link
+                  to="/admin/users/students"
+                  className={`nav-link flex items-center px-4 py-2 text-white hover:bg-white/10 ${location.pathname === '/admin/users/students' ? 'font-bold bg-white/20' : ''}`}
+                >
+                  <span>User</span>
+                </Link>
+                <Link
+                  to="/admin/users/instructors"
+                  className={`nav-link flex items-center px-4 py-2 text-white hover:bg-white/10 ${location.pathname === '/admin/users/instructors' ? 'font-bold bg-white/20' : ''}`}
+                >
+                  <span>Instructor</span>
+                </Link>
+              </div>
+            )}
+          </div>
+
+          <Link to="/admin/coupons" className="nav-link flex items-center px-4 py-2 text-white hover:bg-white/10">
+            <i className="fas fa-ticket-alt mr-3"></i>
+            <span className={!isSidebarOpen && 'hidden'}>Quản lý coupon</span>
           </Link>
         </nav>
       </div>

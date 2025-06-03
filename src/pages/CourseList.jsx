@@ -51,6 +51,9 @@ const CourseList = () => {
   // Get unique categories
   const categories = ['All', ...new Set(courses.map(course => course.category))];
 
+  // Thêm state loading cho filter
+  const [filterLoading, setFilterLoading] = useState(false);
+
   useEffect(() => {
     const fetchCourses = async () => {
       try {
@@ -110,8 +113,15 @@ const CourseList = () => {
   const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
   const currentCourses = filteredCourses.slice(indexOfFirstCourse, indexOfLastCourse);
   
+  // Cập nhật useEffect để reset currentPage khi filter thay đổi
   useEffect(() => { 
     setCurrentPage(1); 
+    // Thêm loading giả khi filter thay đổi
+    setFilterLoading(true);
+    const timer = setTimeout(() => {
+      setFilterLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
   }, [categoryFilter, priceFilter, ratingFilter, searchQuery, levelFilter, durationFilter]);
 
   const handleViewDetail = (courseId) => {
@@ -395,7 +405,12 @@ const CourseList = () => {
             </div>
             {/* Course List - List View */}
             <div className="space-y-6">
-              {currentCourses.length > 0 ? (
+              {filterLoading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="mt-4 text-gray-600">Đang tải danh sách khóa học...</p>
+                </div>
+              ) : currentCourses.length > 0 ? (
                 currentCourses.map(course => {
                   const isEnrolled = enrolledCourses.includes(course.id);
                   return (
