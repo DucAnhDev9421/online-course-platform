@@ -21,13 +21,18 @@ function MyCourses() {
         const response = await axios.get(`https://localhost:7261/api/Enrollments?userId=${user.id}`);
         if (response.status === 200) {
           // Transform the data to match our component's expected structure
-          const transformedCourses = response.data.map(enrollment => ({
-            id: enrollment.courseId,
-            title: enrollment.course.name,
-            description: enrollment.course.description,
-            thumbnail: enrollment.course.imageUrl,
-            enrolledAt: enrollment.enrolledAt,
-            progress: 0 // You might want to fetch this from a separate API endpoint
+          const transformedCourses = await Promise.all(response.data.map(async enrollment => {
+            // Gọi API LessonProgress để lấy percentCompleted
+            const progressResponse = await axios.get(`https://localhost:7261/api/LessonProgress?userId=${user.id}&courseId=${enrollment.courseId}`);
+            const percentCompleted = progressResponse.data.percentCompleted || 0;
+            return {
+              id: enrollment.courseId,
+              title: enrollment.course.name,
+              description: enrollment.course.description,
+              thumbnail: enrollment.course.imageUrl,
+              enrolledAt: enrollment.enrolledAt,
+              progress: percentCompleted // Cập nhật progress từ API LessonProgress
+            };
           }));
           setEnrolledCourses(transformedCourses);
         }
@@ -42,8 +47,24 @@ function MyCourses() {
     fetchEnrolledCourses();
   }, [user]);
 
-  const handleContinueLearning = (courseId) => {
-    navigate(`/courses/${courseId}/learn`);
+  const handleContinueLearning = async (courseId) => {
+    try {
+      // Lấy thông tin khóa học để có bài học đầu tiên
+      const response = await axios.get(`https://localhost:7261/api/courses/${courseId}`);
+      if (response.data.sections && response.data.sections.length > 0) {
+        const firstSection = response.data.sections[0];
+        if (firstSection.lessons && firstSection.lessons.length > 0) {
+          const firstLesson = firstSection.lessons[0];
+          navigate(`/courses/${courseId}/lessons/${firstLesson.id}`);
+          return;
+        }
+      }
+      // Nếu không có bài học nào, chuyển về trang khóa học
+      navigate(`/courses/${courseId}`);
+    } catch (error) {
+      console.error('Error fetching course details:', error);
+      toast.error('Có lỗi xảy ra khi tải thông tin khóa học');
+    }
   };
 
   const handleUnenrollClick = (course) => {
