@@ -24,6 +24,8 @@ const VideoPlayerPage = () => {
   const [reviewInput, setReviewInput] = useState({ rating: 5, comment: '' });
   const [reviews, setReviews] = useState([]);
   const [reviewStats, setReviewStats] = useState(null);
+  const [filterStar, setFilterStar] = useState(0);
+  const [searchReview, setSearchReview] = useState('');
 
   // Fetch course sections and lessons
   useEffect(() => {
@@ -323,6 +325,46 @@ const VideoPlayerPage = () => {
     }
   };
 
+  // Lọc đánh giá theo sao và từ khóa
+  const filteredReviews = reviews.filter(r => 
+    (filterStar === 0 || r.ratingValue === filterStar) &&
+    (
+      r.comment.toLowerCase().includes(searchReview.toLowerCase()) ||
+      (r.firstName && r.firstName.toLowerCase().includes(searchReview.toLowerCase()))
+    )
+  );
+
+  // Thêm hàm toggle hoàn thành bài học
+  const handleToggleLessonComplete = (lesson, completed) => {
+    setSections(prevSections =>
+      prevSections.map(section => ({
+        ...section,
+        lessons: section.lessons.map(l =>
+          l.id === lesson.id ? { ...l, completed } : l
+        ),
+      }))
+    );
+    // Nếu muốn lưu trạng thái lên server, có thể gọi API ở đây
+  };
+
+  // Hàm chuyển đổi duration về phút
+  function parseDurationToMinutes(duration) {
+    if (!duration) return 0;
+    if (typeof duration === 'number') return duration;
+    const parts = duration.split(':').map(Number);
+    if (parts.length === 3) {
+      // hh:mm:ss
+      return parts[0] * 60 + parts[1];
+    } else if (parts.length === 2) {
+      // mm:ss
+      return parts[0];
+    } else if (parts.length === 1) {
+      // chỉ phút
+      return parts[0];
+    }
+    return 0;
+  }
+
   if (!currentLesson) {
     return (
       <div className="container mx-auto px-4 py-16">
@@ -342,7 +384,22 @@ const VideoPlayerPage = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       {/* Header trên cùng */}
-      <header className="w-full bg-gray-900 text-white flex items-center px-8 h-14 shadow z-20">
+      <header className="w-full bg-gray-900 text-white flex items-center px-8 shadow z-20 h-14 relative">
+        <button
+          className="mr-4 p-2 rounded hover:bg-gray-800 focus:outline-none"
+          onClick={() => setIsSidebarOpen(v => !v)}
+          aria-label={isSidebarOpen ? 'Đóng sidebar' : 'Mở sidebar'}
+        >
+          {isSidebarOpen ? (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          )}
+        </button>
         <button
           className="text-2xl font-bold tracking-wide hover:text-purple-400 transition-colors"
           onClick={() => navigate('/')}
@@ -350,6 +407,41 @@ const VideoPlayerPage = () => {
         >
           Academy
         </button>
+        <span className="ml-4 text-lg font-semibold truncate max-w-[60vw] hidden md:inline-block">
+          {currentLesson ? currentLesson.title : ''}
+        </span>
+        <div className="flex items-center gap-2 ml-auto relative group">
+          <div className="relative w-12 h-12 flex items-center justify-center">
+            <svg className="w-12 h-12" viewBox="0 0 40 40">
+              <circle
+                cx="20"
+                cy="20"
+                r="18"
+                fill="none"
+                stroke="#e5e7eb"
+                strokeWidth="4"
+              />
+              <circle
+                cx="20"
+                cy="20"
+                r="18"
+                fill="none"
+                stroke="#6366f1"
+                strokeWidth="4"
+                strokeDasharray={2 * Math.PI * 18}
+                strokeDashoffset={2 * Math.PI * 18 * (1 - progress / 100)}
+                strokeLinecap="round"
+                style={{ transition: 'stroke-dashoffset 0.5s' }}
+              />
+            </svg>
+            <span className="absolute text-xs font-bold text-blue-700">{Math.round(progress)}%</span>
+          </div>
+          <span className="font-semibold text-white hidden md:inline">Tiến độ của bạn</span>
+          {/* Tooltip */}
+          <div className="absolute top-14 left-1/2 -translate-x-1/2 bg-white text-gray-800 text-sm rounded shadow px-4 py-2 z-50 whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition">
+            Đã hoàn thành {allLessons.filter(l => l.completed).length}/{allLessons.length}
+          </div>
+        </div>
       </header>
       <div className="flex flex-1 h-auto min-h-0">
         {/* Main Content - BÊN TRÁI */}
@@ -482,16 +574,6 @@ const VideoPlayerPage = () => {
                         <p className="text-gray-500">Chưa có ghi chú nào</p>
                       )}
                     </div>
-
-                    {/* Complete Lesson Button */}
-                    <div className="flex justify-start mt-6">
-                      <button
-                        onClick={handleCompleteLesson}
-                        className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700"
-                      >
-                        Đánh dấu hoàn thành
-                      </button>
-                    </div>
                   </>
                 )}
                 {activeTab === 'overview' && (
@@ -503,62 +585,101 @@ const VideoPlayerPage = () => {
                 {activeTab === 'reviews' && (
                   <div className="w-full max-w-2xl mx-auto mt-8">
                     {/* Tổng quan đánh giá */}
-                    <div className="mb-8">
-                      <h2 className="text-2xl font-bold mb-4">Phản hồi của học viên</h2>
-                      {reviewStats ? (
-                        <div className="flex items-center gap-8">
-                          <div className="flex flex-col items-center min-w-[120px]">
-                            <span className="text-5xl font-bold text-yellow-700">{reviewStats.averageRating?.toFixed(1) || 0}</span>
-                            <div className="flex text-yellow-500 text-xl mb-1">
-                              {Array.from({ length: 5 }).map((_, i) => (
-                                <span key={i}>{i < Math.round(reviewStats.averageRating) ? '★' : '☆'}</span>
-                              ))}
-                            </div>
-                            <span className="text-yellow-700 font-semibold text-sm">Xếp hạng khóa học</span>
-                            <span className="text-gray-500 text-xs mt-1">{reviewStats.totalRatings} đánh giá</span>
-                          </div>
-                          <div className="flex-1">
-                            {[5, 4, 3, 2, 1].map((star) => {
-                              const percent = reviewStats.totalRatings > 0
-                                ? (reviewStats.ratingDistribution[
-                                    star === 5 ? 'fiveStars' :
-                                    star === 4 ? 'fourStars' :
-                                    star === 3 ? 'threeStars' :
-                                    star === 2 ? 'twoStars' : 'oneStar'
-                                  ] / reviewStats.totalRatings) * 100
-                                : 0;
-                              return (
-                                <div key={star} className="flex items-center gap-2 mb-1">
-                                  <div className="w-2/3 h-2 bg-gray-200 rounded">
-                                    <div className="h-2 rounded bg-gray-400" style={{ width: percent + '%' }}></div>
-                                  </div>
-                                  <span className="text-yellow-500 text-sm ml-2">{'★'.repeat(star)}</span>
-                                  <span className="text-purple-700 text-xs ml-2">
-                                    {reviewStats.ratingDistribution[
-                                      star === 5 ? 'fiveStars' :
-                                      star === 4 ? 'fourStars' :
-                                      star === 3 ? 'threeStars' :
-                                      star === 2 ? 'twoStars' : 'oneStar'
-                                    ]}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
+                    <div className="mb-8 flex flex-col md:flex-row items-center gap-8 bg-white rounded-xl shadow-lg p-6">
+                      <div className="flex flex-col items-center min-w-[120px]">
+                        <span className="text-6xl font-extrabold text-yellow-500 drop-shadow">{reviewStats?.averageRating?.toFixed(1) || 0}</span>
+                        <div className="flex text-yellow-400 text-2xl mb-1">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <span key={i}>{i < Math.round(reviewStats?.averageRating) ? '★' : '☆'}</span>
+                          ))}
                         </div>
-                      ) : (
-                        <div className="text-gray-500">Không có thống kê đánh giá</div>
-                      )}
+                        <span className="text-gray-700 font-semibold text-sm">Xếp hạng khóa học</span>
+                        <span className="text-gray-400 text-xs mt-1">{reviewStats?.totalRatings || 0} đánh giá</span>
+                      </div>
+                      <div className="flex-1 w-full">
+                        {[5, 4, 3, 2, 1].map((star) => {
+                          const percent = reviewStats?.totalRatings > 0
+                            ? (reviewStats.ratingDistribution[
+                                star === 5 ? 'fiveStars' :
+                                star === 4 ? 'fourStars' :
+                                star === 3 ? 'threeStars' :
+                                star === 2 ? 'twoStars' : 'oneStar'
+                              ] / reviewStats.totalRatings) * 100
+                            : 0;
+                          return (
+                            <div key={star} className="flex items-center gap-2 mb-2">
+                              {/* Số sao bên trái */}
+                              <span className="text-yellow-400 text-lg w-16 flex items-center">
+                                {Array.from({ length: star }).map((_, i) => (
+                                  <span key={i}>★</span>
+                                ))}
+                              </span>
+                              {/* Progress bar */}
+                              <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
+                                <div className="h-3 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 transition-all duration-500" style={{ width: percent + '%' }}></div>
+                              </div>
+                              {/* Số lượng đánh giá */}
+                              <span className="text-gray-600 text-xs ml-2 w-8 text-right">
+                                {reviewStats?.ratingDistribution[
+                                  star === 5 ? 'fiveStars' :
+                                  star === 4 ? 'fourStars' :
+                                  star === 3 ? 'threeStars' :
+                                  star === 2 ? 'twoStars' : 'oneStar'
+                                ] || 0}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
+
+                    {/* Bộ lọc đánh giá và tìm kiếm - giao diện giống hình mẫu */}
+                    <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
+                      <div className="flex flex-1">
+                        <input
+                          type="text"
+                          className="w-full border rounded-l px-3 py-2"
+                          placeholder="Tìm kiếm đánh giá"
+                          value={searchReview}
+                          onChange={e => setSearchReview(e.target.value)}
+                        />
+                        <button
+                          className="bg-purple-600 hover:bg-purple-700 text-white px-4 rounded-r flex items-center justify-center"
+                          tabIndex={-1}
+                          type="button"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2" />
+                            <path stroke="currentColor" strokeWidth="2" d="M21 21l-3.5-3.5" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="flex flex-col md:flex-row md:items-center gap-2">
+                        <label className="font-medium text-gray-700 mr-2">Lọc xếp hạng</label>
+                        <select
+                          className="border rounded px-3 py-2"
+                          value={filterStar}
+                          onChange={e => setFilterStar(Number(e.target.value))}
+                        >
+                          <option value={0}>Tất cả xếp hạng</option>
+                          <option value={5}>5 sao</option>
+                          <option value={4}>4 sao</option>
+                          <option value={3}>3 sao</option>
+                          <option value={2}>2 sao</option>
+                          <option value={1}>1 sao</option>
+                        </select>
+                      </div>
+                    </div>
+
                     {/* Form nhập đánh giá mới */}
-                    <div className="mb-8 bg-gray-50 rounded-lg p-6 shadow flex flex-col gap-3">
+                    <div className="mb-8 bg-gradient-to-br from-purple-50 to-white rounded-xl p-6 shadow flex flex-col gap-3">
                       <div className="font-semibold text-lg mb-2">Viết đánh giá của bạn</div>
                       <div className="flex items-center gap-2 mb-2">
                         {[1, 2, 3, 4, 5].map(star => (
                           <button
                             key={star}
                             type="button"
-                            className={`text-2xl ${reviewInput.rating >= star ? 'text-yellow-400' : 'text-gray-300'}`}
+                            className={`text-3xl transition ${reviewInput.rating >= star ? 'text-yellow-400 scale-110' : 'text-gray-300 hover:text-yellow-300'}`}
                             onClick={() => setReviewInput(r => ({ ...r, rating: star }))}
                             aria-label={`Chọn ${star} sao`}
                           >
@@ -568,46 +689,48 @@ const VideoPlayerPage = () => {
                         <span className="ml-2 text-sm text-gray-500">{reviewInput.rating} sao</span>
                       </div>
                       <textarea
-                        className="w-full border rounded-md px-3 py-2 mb-2 focus:ring-2 focus:ring-purple-500"
+                        className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 mb-2 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition"
                         rows={3}
                         placeholder="Nhận xét của bạn..."
                         value={reviewInput.comment}
                         onChange={e => setReviewInput(r => ({ ...r, comment: e.target.value }))}
                       />
                       <button
-                        className="self-end bg-purple-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-purple-700 transition"
+                        className="self-end bg-gradient-to-r from-purple-500 to-purple-700 text-white px-8 py-2 rounded-lg font-bold hover:from-purple-600 hover:to-purple-800 flex items-center gap-2 shadow"
                         onClick={handleSubmitReview}
                       >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         Gửi đánh giá
                       </button>
                     </div>
+
                     {/* Danh sách đánh giá */}
                     <div className="space-y-8">
-                      {reviews.length === 0 && <div className="text-gray-500">Chưa có đánh giá nào</div>}
-                      {reviews.map((review) => (
-                        <div key={review.id} className="flex gap-4 border-b pb-6">
+                      {filteredReviews.length === 0 && <div className="text-gray-400 text-center">Không tìm thấy đánh giá phù hợp</div>}
+                      {filteredReviews.map((review) => (
+                        <div key={review.id} className="flex gap-4 items-start bg-white rounded-xl shadow p-4 hover:shadow-lg transition">
                           {review.imageUrl ? (
-                            <img src={review.imageUrl} alt="avatar" className="w-12 h-12 rounded-full object-cover" />
+                            <img src={review.imageUrl} alt="avatar" className="w-12 h-12 rounded-full object-cover border-2 border-purple-200" />
                           ) : (
-                            <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold text-lg">
+                            <div className="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-lg border-2 border-purple-200">
                               {review.firstName ? review.firstName.charAt(0) : '?'}
                             </div>
                           )}
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="font-semibold">{review.firstName || 'Ẩn danh'}</span>
-                              <div className="flex text-yellow-500 text-base">{'★'.repeat(review.ratingValue)}</div>
-                              {/* Có thể thêm ngày nếu API trả về */}
+                              <span className="font-semibold text-base">{review.firstName || 'Ẩn danh'}</span>
+                              <div className="flex text-yellow-400 text-lg">{'★'.repeat(review.ratingValue)}</div>
+                              <span className="text-gray-400 text-xs ml-2">{review.createdAt ? new Date(review.createdAt).toLocaleDateString() : ''}</span>
                               {user && review.userId === user.id && (
                                 <button
                                   onClick={() => handleDeleteReview(review.id)}
-                                  className="ml-4 text-red-600 hover:underline text-sm"
+                                  className="ml-4 text-red-600 hover:underline text-xs font-semibold"
                                 >
                                   Xóa
                                 </button>
                               )}
                             </div>
-                            <div className="mb-2">{review.comment}</div>
+                            <div className="bg-gray-50 rounded-lg p-3 text-gray-800 shadow-inner">{review.comment}</div>
                           </div>
                         </div>
                       ))}
@@ -622,59 +745,89 @@ const VideoPlayerPage = () => {
           </div>
         </div>
         {/* Sidebar - BÊN PHẢI sticky */}
-        <aside className="w-80 h-screen sticky top-0 right-0 bg-white border-l shadow flex-shrink-0 overflow-y-auto">
-          <div className="p-4 border-b border-gray-200">
-            <h2 className="text-xl font-bold">Nội dung khóa học</h2>
-            <div className="mt-2">
-              <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">Tiến độ: {Math.round(progress)}%</p>
+        {isSidebarOpen && (
+          <aside className="w-80 h-screen sticky top-0 right-0 bg-white border-l shadow flex-shrink-0 overflow-y-auto z-40">
+            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+              <h2 className="text-xl font-bold">Nội dung khóa học</h2>
+              <button
+                className="p-2 rounded hover:bg-gray-100"
+                onClick={() => setIsSidebarOpen(false)}
+                aria-label="Đóng sidebar"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
             </div>
-          </div>
-          <div className="overflow-y-auto h-[calc(100vh-120px)]">
-            {sections.map((section) => (
-              <div key={section.id} className="border-b">
-                {/* Section header */}
-                <button
-                  className="w-full flex justify-between items-center px-4 py-3 font-semibold text-left hover:bg-gray-50"
-                  onClick={() => handleToggleSection(section.id)}
-                >
-                  <span>{section.title}</span>
-                  <svg className={`w-4 h-4 ml-2 transition-transform ${openSectionIds.includes(section.id) ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-                {/* Lessons in section */}
-                {openSectionIds.includes(section.id) && (
-                  <div>
-                    {section.lessons.map((lesson) => (
-                      <div
-                        key={lesson.id}
-                        onClick={() => handleLessonSelect(lesson)}
-                        className={`pl-8 pr-4 py-2 cursor-pointer hover:bg-gray-100 flex items-center justify-between ${lesson.id === currentLesson.id ? 'bg-blue-50' : ''}`}
-                      >
-                        <div className="flex items-center">
-                          {lesson.completed ? (
-                            <svg className="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                          ) : (
-                            <svg className="w-4 h-4 text-gray-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                          <span className="font-medium">{lesson.title}</span>
+            <div className="overflow-y-auto h-[calc(100vh-120px)]">
+              {sections.map((section) => {
+                const completedCount = section.lessons.filter(l => l.completed).length;
+                const totalLessons = section.lessons.length;
+                const totalDuration = section.lessons.reduce((sum, l) => sum + parseDurationToMinutes(l.duration), 0);
+                return (
+                  <div key={section.id} className="border-b">
+                    {/* Section header */}
+                    <button
+                      className="w-full flex justify-between items-center px-4 py-3 font-semibold text-left hover:bg-gray-50"
+                      onClick={() => handleToggleSection(section.id)}
+                    >
+                      <div>
+                        <div>{section.title}</div>
+                        <div className="text-xs text-gray-500 font-normal mt-1">
+                          {completedCount}/{totalLessons} bài học
+                          <span className="mx-2">•</span>
+                          Tổng thời lượng: {totalDuration} phút
                         </div>
-                        <span className="text-sm text-gray-500">{lesson.duration}</span>
                       </div>
-                    ))}
+                      <svg className={`w-4 h-4 ml-2 transition-transform ${openSectionIds.includes(section.id) ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                    {/* Lessons in section */}
+                    {openSectionIds.includes(section.id) && (
+                      <div>
+                        {section.lessons.map((lesson) => (
+                          <div
+                            key={lesson.id}
+                            className={`pl-8 pr-4 py-2 flex items-center justify-between ${lesson.id === currentLesson?.id ? 'bg-blue-50' : ''}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={lesson.completed}
+                                onChange={e => handleToggleLessonComplete(lesson, e.target.checked)}
+                                onClick={e => e.stopPropagation()}
+                              />
+                              <span
+                                className="font-medium cursor-pointer"
+                                onClick={() => handleLessonSelect(lesson)}
+                              >
+                                {lesson.title}
+                              </span>
+                            </div>
+                            <span className="text-sm text-gray-500">{lesson.duration}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </aside>
+                );
+              })}
+            </div>
+          </aside>
+        )}
+        {/* Nút mở sidebar khi đang đóng */}
+        {!isSidebarOpen && (
+          <button
+            className="fixed top-20 right-0 z-50 bg-white border border-gray-300 rounded-l px-2 py-2 shadow hover:bg-gray-100"
+            onClick={() => setIsSidebarOpen(true)}
+            aria-label="Mở sidebar"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   );
