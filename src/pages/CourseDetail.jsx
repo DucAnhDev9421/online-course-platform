@@ -456,15 +456,7 @@ const CourseDetail = () => {
           students: 1200,
           image: response.data.imageUrl || 'https://almablog-media.s3.ap-south-1.amazonaws.com/medium_React_Fundamentals_56e32fd939.png',
           instructor: response.data.instructor,
-          topics: [
-            'Giới thiệu về JSX và Components',
-            'Hiểu về Props và State',
-            'React Hooks (useState, useEffect, useContext)',
-            'Xử lý Forms trong React',
-            'Routing với React Router',
-            'State Management với Context API và Redux',
-            'Tối ưu hiệu suất React'
-          ],
+          topics: response.data.topics || [],
           duration: response.data.totalDuration || '',
           level: response.data.levelText || '',
           lastUpdated: new Date().toISOString(),

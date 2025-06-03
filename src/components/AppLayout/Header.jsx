@@ -14,6 +14,9 @@ export default function Header() {
   const { user, isSignedIn } = useUser();
   const { signOut } = useClerk();
   const [categories, setCategories] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [showCart, setShowCart] = useState(false);
 
   // Load danh sách khóa học yêu thích từ localStorage
   useEffect(() => {
@@ -83,48 +86,8 @@ export default function Header() {
             to="/courses"
             className="font-medium hover:text-purple-700 hidden md:block"
           >
-            Khóa học
+            Khám Phá
           </Link>
-
-          {/* Nút Danh mục */}
-          <div className="relative hidden md:block dropdown">
-            <button
-              className="font-medium hover:text-purple-700 flex items-center"
-              onClick={() => setShowCategories((prev) => !prev)}
-              type="button"
-            >
-              Danh mục
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 ml-1"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-            {/* Dropdown menu lấy từ API */}
-            {showCategories && (
-              <div className="absolute left-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
-                {categories.length === 0 && (
-                  <div className="px-4 py-2 text-gray-400">Không có danh mục</div>
-                )}
-                {categories.map((category) => (
-                  <Link
-                    key={category.id}
-                    to={`/courses?category=${category.id}`}
-                    className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
-                  >
-                    {category.name}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Thanh tìm kiếm */}
@@ -166,55 +129,102 @@ export default function Header() {
               </nav>
 
               {/* Nút khóa học yêu thích */}
-              <Link to="/favorites" className="p-2 text-gray-700 hover:text-red-500 relative">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                  />
-                </svg>
-                {favoriteCourses.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {favoriteCourses.length}
-                  </span>
+              <div
+                className="relative"
+                onMouseEnter={() => setShowFavorites(true)}
+                onMouseLeave={() => setShowFavorites(false)}
+              >
+                <Link to="/favorites" className="p-2 text-gray-700 hover:text-red-500 relative">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                    />
+                  </svg>
+                  {favoriteCourses.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {favoriteCourses.length}
+                    </span>
+                  )}
+                </Link>
+                {showFavorites && (
+                  <div className="dropdown-menu absolute right-0 mt-0 w-72 bg-white rounded-md shadow-lg py-2 z-50 border border-gray-200 transition-all duration-200 ease-in-out">
+                    <div className="px-4 py-2 text-gray-500">Không có mục nào</div>
+                  </div>
                 )}
-              </Link>
+              </div>
 
               {/* Nút giỏ hàng */}
-              <Link to="/cart" className="p-2 text-gray-700 hover:text-purple-700 relative">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-                {cartCourses.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-purple-700 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {cartCourses.length}
-                  </span>
+              <div
+                className="relative"
+                onMouseEnter={() => setShowCart(true)}
+                onMouseLeave={() => setShowCart(false)}
+              >
+                <Link to="/cart" className="p-2 text-gray-700 hover:text-purple-700 relative">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
+                  </svg>
+                  {cartCourses.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-purple-700 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {cartCourses.length}
+                    </span>
+                  )}
+                </Link>
+                {showCart && (
+                  <div className="dropdown-menu absolute right-0 mt-0 w-72 bg-white rounded-md shadow-lg py-2 z-50 border border-gray-200 transition-all duration-200 ease-in-out">
+                    <div className="px-4 py-2 text-gray-500">Không có mục nào</div>
+                  </div>
                 )}
-              </Link>
+              </div>
 
-              <div className="relative dropdown">
+              {/* Nút thông báo */}
+              <div
+                className="relative"
+                onMouseEnter={() => setShowNotifications(true)}
+                onMouseLeave={() => setShowNotifications(false)}
+              >
+                <button
+                  className="p-2 text-gray-700 hover:text-yellow-500 focus:outline-none"
+                  aria-label="Thông báo"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                </button>
+                {/* Dropdown thông báo */}
+                {showNotifications && (
+                  <div className="dropdown-menu absolute right-0 mt-0 w-72 bg-white rounded-md shadow-lg py-2 z-50 border border-gray-200 transition-all duration-200 ease-in-out">
+                    <div className="px-4 py-2 text-gray-500">Không có thông báo</div>
+                  </div>
+                )}
+              </div>
+
+              <div
+                className="relative dropdown"
+                onMouseEnter={() => setShowProfileMenu(true)}
+                onMouseLeave={() => setShowProfileMenu(false)}
+              >
                 <button
                   className="flex items-center space-x-1 focus:outline-none"
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
                 >
                   <div className="w-8 h-8 rounded-full overflow-hidden bg-purple-600 flex items-center justify-center text-white font-medium">
                     {user?.imageUrl ? (
@@ -242,7 +252,7 @@ export default function Header() {
                 </button>
 
                 {showProfileMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                  <div className="dropdown-menu absolute right-0 mt-0 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200 transition-all duration-200 ease-in-out">
                     <Link
                       to="/profileuser"
                       className="block px-4 py-2 text-gray-800 hover:bg-purple-50 hover:text-purple-700 flex items-center transition-colors duration-200 group"
@@ -296,6 +306,22 @@ export default function Header() {
           )}
         </div>
       </div>
+
+      {/* Hiệu ứng transition cho dropdown-menu */}
+      <style jsx global>{`
+        .dropdown-menu {
+          opacity: 0;
+          transform: translateY(10px);
+          pointer-events: none;
+          transition: opacity 0.2s, transform 0.2s;
+        }
+        .relative:hover .dropdown-menu,
+        .dropdown:hover .dropdown-menu {
+          opacity: 1;
+          transform: translateY(0);
+          pointer-events: auto;
+        }
+      `}</style>
     </header>
   );
 }

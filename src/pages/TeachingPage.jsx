@@ -35,6 +35,7 @@ function TeachingPage() {
   const [courseCategory, setCourseCategory] = useState('');
   const [courseLevel, setCourseLevel] = useState('');
   const [courseDesc, setCourseDesc] = useState('');
+  const [courseTopics, setCourseTopics] = useState(['']);
   const [courseVideo, setCourseVideo] = useState('');
   const [courseImage, setCourseImage] = useState('');
   const [coursePrice, setCoursePrice] = useState('');
@@ -147,7 +148,8 @@ function TeachingPage() {
             content: lecture.contentType === 'video' ? lecture.videoUrl : ''
           }))
         })),
-        InstructorId: user?.id
+        InstructorId: user?.id,
+        topics: courseTopics.filter(t => t.trim()),
       };
 
       const response = await axios.post('https://localhost:7261/api/courses', courseData);
@@ -160,6 +162,7 @@ function TeachingPage() {
         setCourseDesc('');
         setCourseCategory('');
         setCourseLevel('');
+        setCourseTopics(['']);
         setCourseVideo('');
         setCourseImage('');
         setCoursePrice('');
@@ -424,6 +427,37 @@ function TeachingPage() {
             <option key={lv.value} value={lv.value}>{lv.label}</option>
           ))}
         </select>
+      </div>
+      <div className="mb-4">
+        <label className="block font-semibold mb-1">Nội dung bài học</label>
+        <div className="space-y-2">
+          {courseTopics.map((topic, idx) => (
+            <div key={idx} className="flex gap-2 items-center">
+              <input
+                type="text"
+                className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder={`Nội dung ${idx + 1}`}
+                value={topic}
+                onChange={e => {
+                  const newTopics = [...courseTopics];
+                  newTopics[idx] = e.target.value;
+                  setCourseTopics(newTopics);
+                }}
+              />
+              {courseTopics.length > 1 && (
+                <button type="button" onClick={() => setCourseTopics(courseTopics.filter((_, i) => i !== idx))} className="text-red-500 px-2 py-1 rounded hover:bg-red-100">Xóa</button>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => setCourseTopics([...courseTopics, ''])}
+            className="mt-2 px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 font-semibold"
+          >
+            + Thêm nội dung
+          </button>
+        </div>
+        <div className="text-xs text-gray-400 mt-1">Mỗi dòng là một ý nội dung. Khi hiển thị sẽ tự động xuống dòng và có dấu tick.</div>
       </div>
       <div className="mb-4">
         <label className="block font-semibold mb-1">Mô tả khóa học</label>

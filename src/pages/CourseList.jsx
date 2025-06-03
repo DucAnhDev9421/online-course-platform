@@ -25,6 +25,31 @@ const SORT_OPTIONS = [
   { value: 'price-desc', label: 'Giá giảm dần' },
 ];
 
+// Thêm hàm formatDuration để chuyển đổi số phút hoặc giây sang giờ và phút
+function formatDuration(duration) {
+  if (!duration || isNaN(duration) || duration < 0) return '0 giờ';
+  let minutes = duration;
+  if (duration > 1000) minutes = Math.round(duration / 60);
+  const hours = Math.round((minutes / 60) * 10) / 10; // Làm tròn 1 số thập phân
+  return `${hours} giờ`;
+}
+
+// Hàm chuyển chuỗi HH:mm:ss sang số giờ thập phân
+function parseDurationToHours(durationStr) {
+  if (!durationStr || typeof durationStr !== 'string') return 0;
+  const parts = durationStr.split(':');
+  if (parts.length === 2) {
+    // Nếu chỉ có phút:giây
+    const minutes = parseInt(parts[0], 10) || 0;
+    const seconds = parseInt(parts[1], 10) || 0;
+    return Math.round((minutes / 60 + seconds / 3600) * 10) / 10;
+  }
+  if (parts.length !== 3) return 0;
+  const hours = parseInt(parts[0], 10) || 0;
+  const minutes = parseInt(parts[1], 10) || 0;
+  const seconds = parseInt(parts[2], 10) || 0;
+  return Math.round((hours + minutes / 60 + seconds / 3600) * 10) / 10;
+}
 
 const CourseList = () => {
   const navigate = useNavigate();
@@ -49,7 +74,7 @@ const CourseList = () => {
   const coursesPerPage = 10;
 
   // Get unique categories
-  const categories = ['All', ...new Set(courses.map(course => course.category))];
+  const [categories, setCategories] = useState(['All']);
 
   // Thêm state loading cho filter
   const [filterLoading, setFilterLoading] = useState(false);
@@ -68,10 +93,11 @@ const CourseList = () => {
             description: course.description,
             level: course.levelText.toLowerCase(),
             category: course.categoryName,
-            rating: 4.5, // Default value since not provided by API
-            students: 0, // Default value since not provided by API
+            rating: course.averageRating ?? 0,
+            students: course.enrollmentCount ?? 0,
             image: course.imageUrl || 'https://almablog-media.s3.ap-south-1.amazonaws.com/medium_React_Fundamentals_56e32fd939.png',
-            duration: 10 // Default value since not provided by API
+            duration: parseDurationToHours(course.totalDuration),
+            instructor: course.instructor?.username || course.instructorName || 'Không rõ',
           }));
         setCourses(mappedCourses);
       } catch (err) {
@@ -83,6 +109,18 @@ const CourseList = () => {
     };
 
     fetchCourses();
+  }, []);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get('https://localhost:7261/api/categories');
+        setCategories(['All', ...res.data.map(cat => cat.name)]);
+      } catch (err) {
+        setCategories(['All']);
+      }
+    };
+    fetchCategories();
   }, []);
 
   // Filter logic
@@ -437,6 +475,7 @@ const CourseList = () => {
                         <div>
                           <h3 className="font-bold text-lg mb-1 cursor-pointer hover:text-blue-700" onClick={() => handleViewDetail(course.id)}>{course.title}</h3>
                           <div className="text-gray-600 text-sm mb-1">{course.category}</div>
+                          <div className="text-gray-500 text-sm mb-1">{course.instructor}</div>
                           <div className="flex items-center text-sm text-gray-500 mb-1">
                             <span className="text-yellow-500 font-semibold mr-1">★ {course.rating}</span>
                             <span className="ml-2">{course.students} học viên</span>
