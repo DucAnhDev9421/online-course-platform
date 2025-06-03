@@ -26,6 +26,12 @@ const VideoPlayerPage = () => {
   const [reviewStats, setReviewStats] = useState(null);
   const [filterStar, setFilterStar] = useState(0);
   const [searchReview, setSearchReview] = useState('');
+  const [lessonProgress, setLessonProgress] = useState({
+    completedLessons: [],
+    completedCount: 0,
+    totalLessons: 0,
+    percentCompleted: 0
+  });
 
   // Fetch course sections and lessons
   useEffect(() => {
@@ -126,6 +132,35 @@ const VideoPlayerPage = () => {
   useEffect(() => {
     if (courseId) fetchReviewStats();
   }, [courseId]);
+
+  // Fetch lesson progress from API and sync completed state
+  useEffect(() => {
+    if (!user || !courseId) return;
+    const fetchLessonProgress = async () => {
+      try {
+        const res = await axios.get(
+          `https://localhost:7261/api/LessonProgress?userId=${user.id}&courseId=${courseId}`
+        );
+        setLessonProgress(res.data);
+        // Đồng bộ trạng thái completed của từng lesson
+        setSections(prevSections => prevSections.map(section => ({
+          ...section,
+          lessons: section.lessons.map(lesson => ({
+            ...lesson,
+            completed: res.data.completedLessons.includes(lesson.id)
+          }))
+        })));
+      } catch (err) {
+        setLessonProgress({
+          completedLessons: [],
+          completedCount: 0,
+          totalLessons: 0,
+          percentCompleted: 0
+        });
+      }
+    };
+    fetchLessonProgress();
+  }, [user, courseId, currentLesson]);
 
   // Xử lý khi chọn bài học khác
   const handleLessonSelect = (lesson) => {
@@ -335,7 +370,7 @@ const VideoPlayerPage = () => {
   );
 
   // Thêm hàm toggle hoàn thành bài học
-  const handleToggleLessonComplete = (lesson, completed) => {
+  const handleToggleLessonComplete = async (lesson, completed) => {
     setSections(prevSections =>
       prevSections.map(section => ({
         ...section,
@@ -344,7 +379,53 @@ const VideoPlayerPage = () => {
         ),
       }))
     );
-    // Nếu muốn lưu trạng thái lên server, có thể gọi API ở đây
+    if (completed) {
+      // Đánh dấu hoàn thành
+      try {
+        await axios.post('https://localhost:7261/api/LessonProgress', {
+          userId: user.id,
+          lessonId: lesson.id
+        });
+        // Fetch lại tiến độ
+        const res = await axios.get(
+          `https://localhost:7261/api/LessonProgress?userId=${user.id}&courseId=${courseId}`
+        );
+        setLessonProgress(res.data);
+        setSections(prevSections => prevSections.map(section => ({
+          ...section,
+          lessons: section.lessons.map(lesson => ({
+            ...lesson,
+            completed: res.data.completedLessons.includes(lesson.id)
+          }))
+        })));
+      } catch (error) {
+        alert('Lưu tiến độ thất bại!');
+      }
+    } else {
+      // Bỏ hoàn thành: gọi API DELETE
+      try {
+        await axios.delete('https://localhost:7261/api/LessonProgress', {
+          data: {
+            userId: user.id,
+            lessonId: lesson.id
+          }
+        });
+        // Fetch lại tiến độ
+        const res = await axios.get(
+          `https://localhost:7261/api/LessonProgress?userId=${user.id}&courseId=${courseId}`
+        );
+        setLessonProgress(res.data);
+        setSections(prevSections => prevSections.map(section => ({
+          ...section,
+          lessons: section.lessons.map(lesson => ({
+            ...lesson,
+            completed: res.data.completedLessons.includes(lesson.id)
+          }))
+        })));
+      } catch (error) {
+        alert('Xóa tiến độ thất bại!');
+      }
+    }
   };
 
   // Hàm chuyển đổi duration về phút
@@ -429,17 +510,17 @@ const VideoPlayerPage = () => {
                 stroke="#6366f1"
                 strokeWidth="4"
                 strokeDasharray={2 * Math.PI * 18}
-                strokeDashoffset={2 * Math.PI * 18 * (1 - progress / 100)}
+                strokeDashoffset={2 * Math.PI * 18 * (1 - (lessonProgress.percentCompleted || 0) / 100)}
                 strokeLinecap="round"
                 style={{ transition: 'stroke-dashoffset 0.5s' }}
               />
             </svg>
-            <span className="absolute text-xs font-bold text-blue-700">{Math.round(progress)}%</span>
+            <span className="absolute text-xs font-bold text-blue-700">{Math.round(lessonProgress.percentCompleted || 0)}%</span>
           </div>
           <span className="font-semibold text-white hidden md:inline">Tiến độ của bạn</span>
           {/* Tooltip */}
           <div className="absolute top-14 left-1/2 -translate-x-1/2 bg-white text-gray-800 text-sm rounded shadow px-4 py-2 z-50 whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition">
-            Đã hoàn thành {allLessons.filter(l => l.completed).length}/{allLessons.length}
+            Đã hoàn thành {lessonProgress.completedCount}/{lessonProgress.totalLessons}
           </div>
         </div>
       </header>
