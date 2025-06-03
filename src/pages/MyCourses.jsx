@@ -14,22 +14,33 @@ function MyCourses() {
   const [selectedCourse, setSelectedCourse] = useState(null);
 
   useEffect(() => {
-    // Load enrolled courses from localStorage
-    const loadEnrolledCourses = () => {
+    const fetchEnrolledCourses = async () => {
+      if (!user) return;
+      
       try {
-        const savedCourses = localStorage.getItem('enrolledCourses');
-        if (savedCourses) {
-          setEnrolledCourses(JSON.parse(savedCourses));
+        const response = await axios.get(`https://localhost:7261/api/Enrollments?userId=${user.id}`);
+        if (response.status === 200) {
+          // Transform the data to match our component's expected structure
+          const transformedCourses = response.data.map(enrollment => ({
+            id: enrollment.courseId,
+            title: enrollment.course.name,
+            description: enrollment.course.description,
+            thumbnail: enrollment.course.imageUrl,
+            enrolledAt: enrollment.enrolledAt,
+            progress: 0 // You might want to fetch this from a separate API endpoint
+          }));
+          setEnrolledCourses(transformedCourses);
         }
       } catch (error) {
-        console.error('Error loading enrolled courses:', error);
+        console.error('Error fetching enrolled courses:', error);
+        toast.error('Có lỗi xảy ra khi tải danh sách khóa học. Vui lòng thử lại sau.');
       } finally {
         setLoading(false);
       }
     };
 
-    loadEnrolledCourses();
-  }, []);
+    fetchEnrolledCourses();
+  }, [user]);
 
   const handleContinueLearning = (courseId) => {
     navigate(`/courses/${courseId}/learn`);
@@ -44,7 +55,6 @@ function MyCourses() {
     if (!selectedCourse || !user) return;
 
     try {
-      // Gọi API hủy đăng ký khóa học
       const response = await axios.delete('https://localhost:7261/api/Enrollments', {
         data: {
           userId: user.id,
@@ -53,20 +63,15 @@ function MyCourses() {
       });
 
       if (response.status === 200) {
-        // Lọc bỏ khóa học đã chọn
+        // Update the enrolled courses list by removing the unenrolled course
         const updatedCourses = enrolledCourses.filter(c => c.id !== selectedCourse.id);
-        
-        // Cập nhật localStorage
-        localStorage.setItem('enrolledCourses', JSON.stringify(updatedCourses));
-        
-        // Cập nhật state
         setEnrolledCourses(updatedCourses);
         
-        // Đóng dialog xác nhận
+        // Close confirmation dialog
         setShowUnenrollConfirm(false);
         setSelectedCourse(null);
         
-        // Hiển thị thông báo thành công
+        // Show success message
         toast.success(`Đã hủy đăng ký khóa học: ${selectedCourse.title}`);
       }
     } catch (error) {

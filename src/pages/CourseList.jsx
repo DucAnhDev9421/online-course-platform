@@ -129,12 +129,24 @@ const CourseList = () => {
   const [selectedCourse, setSelectedCourse] = useState(null);
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem('enrolledCourses') || '[]');
-    setEnrolledCourses(stored);
-  }, []);
+    const fetchEnrolledCourses = async () => {
+      if (!user) return;
+      try {
+        const response = await axios.get(`https://localhost:7261/api/Enrollments?userId=${user.id}`);
+        if (response.status === 200) {
+          const enrolledIds = response.data.map(enrollment => enrollment.courseId);
+          setEnrolledCourses(enrolledIds);
+        }
+      } catch (error) {
+        setEnrolledCourses([]);
+        console.error('Error fetching enrolled courses:', error);
+      }
+    };
+    fetchEnrolledCourses();
+  }, [user]);
 
   const handleEnrollClick = (course) => {
-    const isAlreadyEnrolled = enrolledCourses.some(c => c.id === course.id);
+    const isAlreadyEnrolled = enrolledCourses.includes(course.id);
     if (isAlreadyEnrolled) {
       alert('Bạn đã đăng ký khóa học này rồi!');
       return;
@@ -158,20 +170,12 @@ const CourseList = () => {
       const response = await axios.post('https://localhost:7261/api/Enrollments', enrollmentData);
 
       if (response.status === 200 || response.status === 201) {
-        // Cập nhật danh sách khóa học đã đăng ký trong localStorage
-        const newEnrolled = [
-          ...enrolledCourses,
-          {
-            id: selectedCourse.id,
-            title: selectedCourse.title,
-            thumbnail: selectedCourse.image,
-            enrolledAt: new Date().toISOString(),
-            progress: 0,
-            lastAccessed: new Date().toISOString()
-          }
-        ];
-        localStorage.setItem('enrolledCourses', JSON.stringify(newEnrolled));
-        setEnrolledCourses(newEnrolled);
+        // Gọi lại API để cập nhật danh sách đã đăng ký
+        const enrollRes = await axios.get(`https://localhost:7261/api/Enrollments?userId=${user.id}`);
+        if (enrollRes.status === 200) {
+          const enrolledIds = enrollRes.data.map(enrollment => enrollment.courseId);
+          setEnrolledCourses(enrolledIds);
+        }
         setShowConfirmModal(false);
         setSelectedCourse(null);
         toast.success(`Đăng ký thành công khóa học: ${selectedCourse.title}`);
@@ -393,7 +397,7 @@ const CourseList = () => {
             <div className="space-y-6">
               {currentCourses.length > 0 ? (
                 currentCourses.map(course => {
-                  const isEnrolled = enrolledCourses.some(c => c.id === course.id);
+                  const isEnrolled = enrolledCourses.includes(course.id);
                   return (
                     <div key={course.id} className="flex bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                       <div 
