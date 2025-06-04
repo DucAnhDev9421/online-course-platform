@@ -35,6 +35,10 @@ const CourseDetail = () => {
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [expandedReviews, setExpandedReviews] = useState({});
   const [relatedCourses, setRelatedCourses] = useState([]);
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState(0);
+  const [couponError, setCouponError] = useState(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
   // Tính tổng thời lượng
   const formatTotalDuration = (minutes) => {
@@ -451,7 +455,7 @@ const CourseDetail = () => {
         const courseData = {
           id: response.data.id,
           title: response.data.name,
-          price: response.data.price,
+          price: response.data.price || 0,
           description: response.data.description,
           rating: 4.5,
           students: 1200,
@@ -642,6 +646,74 @@ const CourseDetail = () => {
     }
   };
 
+  // Xử lý áp dụng coupon
+  const handleApplyCoupon = async () => {
+    if (!user?.id) {
+      toast.error('Vui lòng đăng nhập để áp dụng coupon.');
+      navigate('/login');
+      return;
+    }
+
+    if (!couponCode) {
+      setCouponError('Vui lòng nhập mã coupon.');
+      return;
+    }
+    if (!course?.id) {
+      setCouponError('Không thể áp dụng coupon cho khóa học này.');
+      return;
+    }
+
+    setIsApplyingCoupon(true);
+    setCouponError(null);
+    setAppliedDiscount(0);
+
+    try {
+      const token = await getToken(); // Lấy token từ Clerk
+       if (!token) {
+         toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+         navigate('/login');
+         return;
+       }
+
+      const res = await axios.post('https://localhost:7261/api/coupons/validate', {
+        code: couponCode,
+        courseId: Number(course.id) // Ensure courseId is a number if needed by API
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+      );
+
+      // Assuming API returns discountAmount on success
+      // You might need to adjust this based on the actual API response structure
+      if (res.data && typeof res.data.discountAmount === 'number') {
+        setAppliedDiscount(res.data.discountAmount);
+        toast.success(`Áp dụng coupon thành công! Giảm giá ${res.data.discountAmount.toLocaleString('vi-VN')} VNĐ.`);
+      } else if (res.data && typeof res.data.discount === 'object' && typeof res.data.discount.discountAmount === 'number') {
+         setAppliedDiscount(res.data.discount.discountAmount);
+         toast.success(`Áp dụng coupon thành công! Giảm giá ${res.data.discount.discountAmount.toLocaleString('vi-VN')} VNĐ.`);
+      }
+       else {
+        // Handle unexpected successful response structure
+         setCouponError('Coupon không hợp lệ hoặc không áp dụng được cho khóa học này.');
+         toast.error('Coupon không hợp lệ.');
+       }
+
+    } catch (error) {
+      console.error('Error applying coupon:', error.response?.data || error.message);
+      // Assuming error response contains a message in error.response.data or error.message
+      const errorMessage = error.response?.data?.message || error.response?.data || error.message || 'Có lỗi xảy ra khi áp dụng coupon!';
+      setCouponError(errorMessage);
+      toast.error(errorMessage);
+      setAppliedDiscount(0); // Reset discount on error
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-16 flex justify-center">
@@ -670,6 +742,7 @@ const CourseDetail = () => {
   }
 
   const progress = (course.lessons.filter(l => l.completed).length / course.lessons.length) * 100;
+  const finalPrice = course.price - appliedDiscount;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -901,7 +974,9 @@ const CourseDetail = () => {
                 className="rounded-md"
               ></iframe>
             </div>
-            <div className="text-3xl font-bold text-gray-900 mb-4">{course.price ? course.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }) : 'Miễn phí'}</div>
+            <div className="text-3xl font-bold text-gray-900 mb-4">
+              {finalPrice > 0 ? finalPrice.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }) : 'Miễn phí'}
+            </div>
             <div className="flex gap-2 mb-3">
               <button 
                 className="flex-1 bg-purple-600 text-white py-3 rounded-md text-lg font-semibold hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed"
@@ -962,8 +1037,23 @@ const CourseDetail = () => {
             </div>
             <div className="mb-2">
               <div className="text-sm text-gray-500 mb-1">Áp dụng coupon</div>
-              <input type="text" className="w-full border rounded px-3 py-2 mb-2" placeholder="Nhập coupon" />
-              <button className="w-full bg-purple-100 text-purple-700 py-2 rounded font-semibold hover:bg-purple-200">Áp dụng</button>
+              <div className="flex gap-2">
+                 <input
+                   type="text"
+                   className={`flex-1 border rounded px-3 py-2 ${couponError ? 'border-red-500' : 'border-gray-300'}`}
+                   placeholder="Nhập mã coupon"
+                   value={couponCode}
+                   onChange={(e) => setCouponCode(e.target.value)}
+                 />
+                 <button
+                   className="bg-purple-100 text-purple-700 py-2 px-4 rounded font-semibold hover:bg-purple-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                   onClick={handleApplyCoupon}
+                   disabled={isApplyingCoupon}
+                 >
+                    {isApplyingCoupon ? 'Đang áp dụng...' : 'Áp dụng'}
+                 </button>
+              </div>
+               {couponError && <p className="text-red-500 text-xs mt-1">{couponError}</p>}
             </div>
           </div>
         </aside>
