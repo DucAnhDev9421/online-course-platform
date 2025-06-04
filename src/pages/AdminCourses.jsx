@@ -71,6 +71,12 @@ const AdminCourses = () => {
   const [filterCategory, setFilterCategory] = useState('');
   const [filterLevel, setFilterLevel] = useState('');
 
+  // New states for Related Courses Modal
+  const [showRelatedCoursesModal, setShowRelatedCoursesModal] = useState(false);
+  const [managingRelatedCourseId, setManagingRelatedCourseId] = useState(null);
+  const [managingRelatedCourseName, setManagingRelatedCourseName] = useState('');
+  const [selectedRelatedCourseId, setSelectedRelatedCourseId] = useState('');
+
   // Thêm useEffect để lấy danh sách danh mục khi component mount
   useEffect(() => {
     const fetchCategories = async () => {
@@ -643,7 +649,7 @@ const AdminCourses = () => {
       videoUrl: ''
     };
 
-    setSections(sections.map(section => 
+    setSections(sections.map(section =>
       section.id === sectionId
         ? { ...section, lectures: [...section.lectures, newLecture] }
         : section
@@ -791,6 +797,49 @@ const AdminCourses = () => {
     }
   };
 
+  // Open Related Courses Modal
+  const openRelatedCoursesModal = (course) => {
+    setManagingRelatedCourseId(course.id);
+    setManagingRelatedCourseName(course.name);
+    setSelectedRelatedCourseId(''); // Reset selected related course
+    setShowRelatedCoursesModal(true);
+    setOpenDropdown(null); // Close dropdown
+  };
+
+  // Handle adding related course via API
+  const handleAddRelatedCourse = async () => {
+    if (!managingRelatedCourseId || !selectedRelatedCourseId) {
+      toast.error('Vui lòng chọn khóa học liên quan!');
+      return;
+    }
+
+    if (managingRelatedCourseId === parseInt(selectedRelatedCourseId)) {
+       toast.error('Không thể liên kết khóa học với chính nó!');
+       return;
+    }
+
+    try {
+      // Call API to add related course
+      await axios.post(`https://localhost:7261/api/courses/${managingRelatedCourseId}/related`, parseInt(selectedRelatedCourseId), { // Send relatedCourseId directly in body
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      toast.success(`Đã thêm liên kết giữa '${managingRelatedCourseName}' và khóa học đã chọn!`);
+      // Optionally re-fetch courses or update state to show linked courses later
+
+      // Close modal
+      setShowRelatedCoursesModal(false);
+      setManagingRelatedCourseId(null);
+      setManagingRelatedCourseName('');
+      setSelectedRelatedCourseId('');
+
+    } catch (error) {
+      console.error('Error adding related course:', error.response?.data || error.message);
+      const errorMessage = error.response?.data?.message || error.response?.data || error.message || 'Có lỗi xảy ra khi thêm liên kết!';
+      toast.error(errorMessage);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Breadcrumb */}
@@ -874,7 +923,7 @@ const AdminCourses = () => {
             />
           </div>
           {/* Table */}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto courses-table">
             {isLoading ? (
               <div className="flex justify-center items-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
@@ -929,13 +978,13 @@ const AdminCourses = () => {
                         <td className="py-3 px-4 align-top space-x-2">
                           {course.status === 'pending' && (
                             <>
-                              <button 
+                              <button
                                 onClick={() => handleStatusChange(course.id, 'rejected')} 
                                 className="border px-3 py-1 rounded text-gray-700 hover:bg-gray-100"
                               >
                                 Từ chối
                               </button>
-                              <button 
+                              <button
                                 onClick={() => handleStatusChange(course.id, 'approved')} 
                                 className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
                               >
@@ -944,7 +993,7 @@ const AdminCourses = () => {
                             </>
                           )}
                           {course.status === 'approved' && (
-                            <button 
+                            <button
                               onClick={() => handleStatusChange(course.id, 'pending')} 
                               className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600"
                             >
@@ -952,7 +1001,7 @@ const AdminCourses = () => {
                             </button>
                           )}
                           {course.status === 'rejected' && (
-                            <button 
+                            <button
                               onClick={() => handleStatusChange(course.id, 'pending')} 
                               className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600"
                             >
@@ -972,7 +1021,13 @@ const AdminCourses = () => {
                             <FaEllipsisV />
                           </button>
                           {openDropdown === course.id && (
-                            <div className="absolute right-10 top-2 z-10 bg-white border rounded shadow-lg min-w-[120px]">
+                            <div className="absolute right-10 top-2 z-10 bg-white border rounded shadow-lg min-w-[160px]">
+                              <button
+                                className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100 whitespace-nowrap"
+                                onClick={() => openRelatedCoursesModal(course)}
+                              >
+                                Quản lý liên kết
+                              </button>
                               <button
                                 className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 whitespace-nowrap"
                                 onClick={async () => {
@@ -998,6 +1053,47 @@ const AdminCourses = () => {
           </div>
         </div>
       )}
+
+      {/* Related Courses Management Modal */}
+      {showRelatedCoursesModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Quản lý liên kết cho: {managingRelatedCourseName}</h2>
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="related-course">Chọn khóa học liên quan</label>
+              <select
+                id="related-course"
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                value={selectedRelatedCourseId}
+                onChange={(e) => setSelectedRelatedCourseId(e.target.value)}
+              >
+                <option value="">-- Chọn khóa học --</option>
+                {courses.filter(c => c.id !== managingRelatedCourseId).map(course => (
+                   <option key={course.id} value={course.id}>{course.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleAddRelatedCourse}
+                disabled={!selectedRelatedCourseId}
+              >
+                Thêm liên kết
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowRelatedCoursesModal(false)}
+                className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ToastContainer />
     </div>
   );
