@@ -92,6 +92,10 @@ const AdminLayout = ({ children }) => {
             <i className="fas fa-ticket-alt mr-3"></i>
             <span className={!isSidebarOpen && 'hidden'}>Quản lý coupon</span>
           </Link>
+          <Link to="/admin/slides" className="nav-link flex items-center px-4 py-2 text-white hover:bg-white/10">
+            <i className="fas fa-images mr-3"></i>
+            <span className={!isSidebarOpen && 'hidden'}>Quản lý Slide</span>
+          </Link>
         </nav>
       </div>
       {/* Main Content */}

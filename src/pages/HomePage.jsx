@@ -5,6 +5,7 @@ import Categories from '@components/Categories';
 import CourseCard from '@components/courses/CourseCard';
 import axios from 'axios';
 import { useUser } from '@clerk/clerk-react';
+import SkeletonCourseCard from '@components/courses/SkeletonCourseCard';
 
 const HomePage = () => {
   const [courses, setCourses] = useState([]);
@@ -30,7 +31,9 @@ const HomePage = () => {
             students: 0, // hoặc course.students nếu có
             image: course.imageUrl || 'https://almablog-media.s3.ap-south-1.amazonaws.com/medium_React_Fundamentals_56e32fd939.png',
           }));
-        setCourses(freeCourses);
+        // Thêm delay 1200ms để tạo hiệu ứng loading lâu hơn
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        setCourses(freeCourses.slice(0, 8));
       } catch (err) {
         setError('Không thể tải danh sách khóa học miễn phí');
       } finally {
@@ -78,7 +81,11 @@ const HomePage = () => {
           Các khóa học miễn phí
         </h2>
         {loading ? (
-          <div className="text-center py-8 text-gray-500">Đang tải...</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, idx) => (
+              <SkeletonCourseCard key={idx} />
+            ))}
+          </div>
         ) : error ? (
           <div className="text-center py-8 text-red-500">{error}</div>
         ) : (

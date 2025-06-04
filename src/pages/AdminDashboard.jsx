@@ -15,6 +15,7 @@ import {
 } from 'chart.js';
 import '../assets/css/admin.css';
 import { useUserInfo } from '../contexts/UserContext';
+import axios from 'axios';
 
 // Register ChartJS components
 ChartJS.register(
@@ -32,65 +33,59 @@ ChartJS.register(
 const AdminDashboard = () => {
   const { userInfo } = useUserInfo();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalCourses, setTotalCourses] = useState(0);
+  const [activeStudents, setActiveStudents] = useState(0);
+  const [topEnrolledCourses, setTopEnrolledCourses] = useState([]);
+  const [categoryDistribution, setCategoryDistribution] = useState([]);
+  const [newUsersThisMonth, setNewUsersThisMonth] = useState(0);
 
   // Kiểm tra quyền truy cập
   if (!userInfo || userInfo.role !== 'Admin') {
     return <Navigate to="/" replace />;
   }
 
+  // Thêm useEffect để fetch dữ liệu từ API
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get('https://localhost:7261/api/admin/dashboard-stats');
+        const { totalUsers, totalCourses, activeStudents, topEnrolledCourses, categoryDistribution, newUsersThisMonth } = res.data;
+        setTotalUsers(totalUsers);
+        setTotalCourses(totalCourses);
+        setActiveStudents(activeStudents);
+        setTopEnrolledCourses(topEnrolledCourses);
+        setCategoryDistribution(categoryDistribution);
+        setNewUsersThisMonth(newUsersThisMonth);
+      } catch (err) {
+        setError('Không thể tải dữ liệu thống kê');
+      } finally { setLoading(false); }
+    };
+    fetchDashboardStats();
+  }, []);
+
   // Chart data for user growth
   const userGrowthData = {
     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
     datasets: [
-      {
-        label: 'Người học mới',
-        data: [120, 190, 300, 250, 280, 350],
-        borderColor: 'rgb(75, 192, 192)',
-        tension: 0.4,
-        fill: true,
-        backgroundColor: 'rgba(75, 192, 192, 0.1)',
-      },
-      {
-        label: 'Giảng viên mới',
-        data: [10, 15, 20, 18, 25, 30],
-        borderColor: 'rgb(255, 99, 132)',
-        tension: 0.4,
-        fill: true,
-        backgroundColor: 'rgba(255, 99, 132, 0.1)',
-      }
+      { label: 'Người học mới', data: [0, 0, 0, 0, 0, newUsersThisMonth], borderColor: 'rgb(75, 192, 192)', tension: 0.4, fill: true, backgroundColor: 'rgba(75, 192, 192, 0.1)' },
+      { label: 'Giảng viên mới', data: [0, 0, 0, 0, 0, 0], borderColor: 'rgb(255, 99, 132)', tension: 0.4, fill: true, backgroundColor: 'rgba(255, 99, 132, 0.1)' }
     ],
   };
 
   // Chart data for course distribution
   const courseDistributionData = {
-    labels: ['Lập trình', 'Thiết kế', 'Kinh doanh', 'Marketing', 'Ngoại ngữ'],
-    datasets: [
-      {
-        data: [35, 25, 20, 15, 5],
-        backgroundColor: [
-          'rgb(75, 192, 192)',
-          'rgb(255, 99, 132)',
-          'rgb(255, 205, 86)',
-          'rgb(54, 162, 235)',
-          'rgb(153, 102, 255)',
-        ],
-        borderWidth: 2,
-        borderColor: 'white',
-      },
-    ],
+    labels: categoryDistribution.map(c => c.categoryName),
+    datasets: [ { data: categoryDistribution.map(c => c.courseCount), backgroundColor: [ 'rgb(75, 192, 192)', 'rgb(255, 99, 132)', 'rgb(255, 205, 86)', 'rgb(54, 162, 235)', 'rgb(153, 102, 255)', 'rgb(255, 99, 132)', 'rgb(255, 205, 86)', 'rgb(54, 162, 235)', 'rgb(153, 102, 255)', 'rgb(75, 192, 192)' ], borderWidth: 2, borderColor: 'white' } ],
   };
 
   // Chart data for course enrollment
   const courseEnrollmentData = {
-    labels: ['Khóa học 1', 'Khóa học 2', 'Khóa học 3', 'Khóa học 4', 'Khóa học 5'],
-    datasets: [
-      {
-        label: 'Số người đăng ký',
-        data: [150, 120, 200, 180, 250],
-        backgroundColor: 'rgba(54, 162, 235, 0.7)',
-        borderRadius: 5,
-      },
-    ],
+    labels: topEnrolledCourses.map(c => c.courseName),
+    datasets: [ { label: 'Số người đăng ký', data: topEnrolledCourses.map(c => c.enrollmentCount), backgroundColor: 'rgba(54, 162, 235, 0.7)', borderRadius: 5 } ],
   };
 
   const chartOptions = {
@@ -147,8 +142,8 @@ const AdminDashboard = () => {
               </div>
               <div className="ml-4">
                 <h3 className="text-gray-500 text-sm">Tổng người dùng</h3>
-                <p className="text-2xl font-semibold gradient-text">1,234</p>
-                <p className="text-xs text-green-500">↑ 12% so với tháng trước</p>
+                <p className="text-2xl font-semibold gradient-text">{totalUsers}</p>
+                <p className="text-xs text-green-500">↑ {newUsersThisMonth} người dùng mới trong tháng</p>
               </div>
             </div>
           </div>
@@ -160,7 +155,7 @@ const AdminDashboard = () => {
               </div>
               <div className="ml-4">
                 <h3 className="text-gray-500 text-sm">Tổng khóa học</h3>
-                <p className="text-2xl font-semibold gradient-text">56</p>
+                <p className="text-2xl font-semibold gradient-text">{totalCourses}</p>
                 <p className="text-xs text-green-500">↑ 8% so với tháng trước</p>
               </div>
             </div>
@@ -173,7 +168,7 @@ const AdminDashboard = () => {
               </div>
               <div className="ml-4">
                 <h3 className="text-gray-500 text-sm">Học viên đang học</h3>
-                <p className="text-2xl font-semibold gradient-text">789</p>
+                <p className="text-2xl font-semibold gradient-text">{activeStudents}</p>
                 <p className="text-xs text-green-500">↑ 15% so với tháng trước</p>
               </div>
             </div>
@@ -197,7 +192,7 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
           <div className="chart-container p-6">
             <h2 className="text-xl font-semibold mb-4 gradient-text">Tăng trưởng người dùng</h2>
-            <Line data={userGrowthData} options={chartOptions} />
+            {loading ? ( <div>Đang tải...</div> ) : error ? ( <div className="text-red-500">{error}</div> ) : ( <Line data={userGrowthData} options={chartOptions} /> )}
           </div>
           <div className="chart-container p-6">
             <h2 className="text-xl font-semibold mb-4 gradient-text">Phân bố khóa học</h2>

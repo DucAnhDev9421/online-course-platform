@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useAuth } from '@clerk/clerk-react';
+import { useAuth, useUser } from '@clerk/clerk-react';
 import { toast } from 'react-toastify';
 import CourseCard from '@components/courses/CourseCard';
 
@@ -9,6 +9,7 @@ const CourseDetail = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const { getToken } = useAuth();
+  const { user } = useUser();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -483,39 +484,34 @@ const CourseDetail = () => {
     fetchCourseDetail();
   }, [courseId]);
 
-  // Kiểm tra và cập nhật trạng thái yêu thích
+  // Đồng bộ trạng thái yêu thích với server khi load trang hoặc khi course thay đổi
   useEffect(() => {
-    if (course) {
-      const favoriteCourses = JSON.parse(localStorage.getItem('favoriteCourses') || '[]');
-      setIsFavorite(favoriteCourses.some(fc => fc.id === course.id));
-    }
-  }, [course]);
+    const fetchFavorites = async () => {
+      if (!user?.id || !course) return;
+      try {
+        const res = await axios.get(`https://localhost:7261/api/users/${user.id}/favorites`);
+        setIsFavorite(res.data.some(fav => fav.id === course.id));
+      } catch (err) {
+        setIsFavorite(false);
+      }
+    };
+    fetchFavorites();
+  }, [user, course]);
 
-  // Xử lý thêm/xóa khóa học yêu thích
-  const handleToggleFavorite = () => {
-    const favoriteCourses = JSON.parse(localStorage.getItem('favoriteCourses') || '[]');
-    
-    if (isFavorite) {
-      // Xóa khỏi danh sách yêu thích
-      const updatedFavorites = favoriteCourses.filter(fc => fc.id !== course.id);
-      localStorage.setItem('favoriteCourses', JSON.stringify(updatedFavorites));
-      setIsFavorite(false);
-      toast.info('Đã bỏ khỏi danh sách yêu thích!');
-    } else {
-      // Thêm vào danh sách yêu thích
-      const newFavorite = {
-        id: course.id,
-        title: course.title,
-        image: course.image,
-        price: course.price,
-        rating: course.rating,
-        students: course.students,
-        addedAt: new Date().toISOString()
-      };
-      favoriteCourses.push(newFavorite);
-      localStorage.setItem('favoriteCourses', JSON.stringify(favoriteCourses));
-      setIsFavorite(true);
-      toast.success('Đã thêm vào danh sách yêu thích!');
+  // Xử lý thêm/xóa khóa học yêu thích (server)
+  const handleToggleFavorite = async () => {
+    if (!user?.id) {
+      toast.error('Vui lòng đăng nhập để sử dụng chức năng này!');
+      return;
+    }
+    try {
+      await axios.patch(`https://localhost:7261/api/users/${user.id}/favorite`, { courseId: course.id });
+      // Sau khi PATCH xong, gọi lại GET để đồng bộ trạng thái
+      const res = await axios.get(`https://localhost:7261/api/users/${user.id}/favorites`);
+      setIsFavorite(res.data.some(fav => fav.id === course.id));
+      toast.success(isFavorite ? 'Đã bỏ khỏi danh sách yêu thích!' : 'Đã thêm vào danh sách yêu thích!');
+    } catch (error) {
+      toast.error('Có lỗi khi cập nhật yêu thích!');
     }
   };
 

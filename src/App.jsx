@@ -25,6 +25,11 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { UserProvider } from './contexts/UserContext';
 import AdminCourseDetail from './pages/AdminCourseDetail';
+import UserManagement from './pages/admin/UserManagement';
+import InstructorManagement from './pages/admin/InstructorManagement';
+import SlideManagement from './pages/admin/SlideManagement';
+import CouponManagement from './pages/admin/CouponManagement';
+import BecomeInstructor from './pages/BecomeInstructor';
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -83,6 +88,7 @@ function AppLayout() {
           } />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/become-instructor" element={<BecomeInstructor />} />
           {/* Admin routes lồng layout */}
           <Route path="/admin" element={
             <ProtectedRoute>
@@ -96,6 +102,10 @@ function AppLayout() {
             <Route path="courses/:id" element={<AdminCourseDetail />} />
             <Route path="courses/categories" element={<AdminCategories />} />
             <Route path="users" element={<AdminUsers />} />
+            <Route path="users/students" element={<UserManagement />} />
+            <Route path="users/instructors" element={<InstructorManagement />} />
+            <Route path="slides" element={<SlideManagement />} />
+            <Route path="coupons" element={<CouponManagement />} />
             <Route path="*" element={<AdminDashboard />} />
           </Route>
           <Route path="*" element={<NotFound />} />

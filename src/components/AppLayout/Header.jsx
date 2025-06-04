@@ -1,9 +1,10 @@
 // components/Header.jsx
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useUser, useClerk } from '@clerk/clerk-react';
 import { FaUser, FaKey, FaTachometerAlt, FaSignOutAlt } from 'react-icons/fa';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 export default function Header() {
   const location = useLocation();
@@ -17,6 +18,8 @@ export default function Header() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showFavorites, setShowFavorites] = useState(false);
   const [showCart, setShowCart] = useState(false);
+  const [loadingFavorites, setLoadingFavorites] = useState(false);
+  const navigate = useNavigate();
 
   // Load danh sách khóa học yêu thích từ localStorage
   useEffect(() => {
@@ -65,6 +68,51 @@ export default function Header() {
   const handleSignOut = () => {
     signOut();
     setShowProfileMenu(false);
+  };
+
+  // Thêm hàm kiểm tra role
+  const checkInstructorRole = async () => {
+    try {
+      console.log('Checking role for user ID:', user?.id);
+      const response = await axios.get(`https://localhost:7261/api/users/${user?.id}/role`);
+      console.log('API Response:', response.data);
+      const userRole = response.data.role;
+      console.log('User Role:', userRole);
+      
+      // Kiểm tra chính xác giá trị role
+      if (userRole === 'Instructor' || userRole === 'Admin' || 
+          userRole === 'instructor' || userRole === 'admin' || 
+          userRole.toLowerCase() === 'instructor' || userRole.toLowerCase() === 'admin') {
+        console.log('Access granted, navigating to teaching page');
+        navigate('/teaching');
+      } else {
+        console.log('Access denied, redirecting to become-instructor page');
+        navigate('/become-instructor');
+        toast.info('Bạn cần đăng ký làm giảng viên để truy cập trang này');
+      }
+    } catch (error) {
+      console.error('Error checking role:', error);
+      console.error('Error response:', error.response);
+      toast.error('Có lỗi xảy ra khi kiểm tra quyền truy cập');
+    }
+  };
+
+  // Khi hover vào nút yêu thích, gọi API lấy danh sách yêu thích
+  const handleShowFavorites = async () => {
+    setShowFavorites(true);
+    if (!user?.id) {
+      setFavoriteCourses([]);
+      return;
+    }
+    setLoadingFavorites(true);
+    try {
+      const res = await axios.get(`https://localhost:7261/api/users/${user.id}/favorites`);
+      setFavoriteCourses(res.data || []);
+    } catch (err) {
+      setFavoriteCourses([]);
+    } finally {
+      setLoadingFavorites(false);
+    }
   };
 
   return (
@@ -123,15 +171,18 @@ export default function Header() {
                 <Link to="/my-courses" className="font-medium hover:text-purple-700">
                   Học tập
                 </Link>
-                <Link to="/teaching" className="font-medium hover:text-purple-700">
+                <button 
+                  onClick={checkInstructorRole}
+                  className="font-medium hover:text-purple-700"
+                >
                   Giảng dạy
-                </Link>
+                </button>
               </nav>
 
               {/* Nút khóa học yêu thích */}
               <div
                 className="relative"
-                onMouseEnter={() => setShowFavorites(true)}
+                onMouseEnter={handleShowFavorites}
                 onMouseLeave={() => setShowFavorites(false)}
               >
                 <Link to="/favorites" className="p-2 text-gray-700 hover:text-red-500 relative">
@@ -149,15 +200,37 @@ export default function Header() {
                       d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
                     />
                   </svg>
-                  {favoriteCourses.length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {favoriteCourses.length}
-                    </span>
-                  )}
                 </Link>
                 {showFavorites && (
                   <div className="dropdown-menu absolute right-0 mt-0 w-72 bg-white rounded-md shadow-lg py-2 z-50 border border-gray-200 transition-all duration-200 ease-in-out">
-                    <div className="px-4 py-2 text-gray-500">Không có mục nào</div>
+                    {loadingFavorites ? (
+                      <div className="px-4 py-4 text-center text-gray-500">Đang tải...</div>
+                    ) : favoriteCourses.length === 0 ? (
+                      <div className="px-4 py-2 text-gray-500">Chưa có khóa học yêu thích</div>
+                    ) : (
+                      <ul>
+                        {favoriteCourses.slice(0, 5).map(course => (
+                          <li key={course.id} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                              onClick={() => { navigate(`/courses/${course.id}`); setShowFavorites(false); }}>
+                            <img src={course.imageUrl} alt={course.name} className="w-10 h-10 rounded object-cover border" />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-sm text-gray-900 line-clamp-1">{course.name}</div>
+                              <div className="text-xs text-gray-500 line-clamp-1">{course.instructorName || 'Giảng viên'}</div>
+                              <div className="text-xs font-bold mt-0.5 {course.price === 0 ? 'text-green-600' : 'text-purple-700'}">
+                                {course.price === 0 ? 'Miễn phí' : course.price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                        {favoriteCourses.length > 5 && (
+                          <li className="px-4 py-2 text-center">
+                            <Link to="/favorites" className="text-purple-700 font-semibold hover:underline" onClick={() => setShowFavorites(false)}>
+                              Xem tất cả ({favoriteCourses.length})
+                            </Link>
+                          </li>
+                        )}
+                      </ul>
+                    )}
                   </div>
                 )}
               </div>

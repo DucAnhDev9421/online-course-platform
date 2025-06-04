@@ -1,22 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUser } from '@clerk/clerk-react';
+import axios from 'axios';
 
 const Favorites = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [favoriteCourses, setFavoriteCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load danh sách khóa học yêu thích từ localStorage
-    const storedFavorites = JSON.parse(localStorage.getItem('favoriteCourses') || '[]');
-    setFavoriteCourses(storedFavorites);
-    setLoading(false);
-  }, []);
+    const fetchFavorites = async () => {
+      if (!user?.id) {
+        setFavoriteCourses([]);
+        setLoading(false);
+        return;
+      }
+      try {
+        const res = await axios.get(`https://localhost:7261/api/users/${user.id}/favorites`);
+        setFavoriteCourses(res.data || []);
+      } catch (err) {
+        setFavoriteCourses([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFavorites();
+  }, [user]);
 
+  // Xóa khỏi danh sách yêu thích (chỉ xóa khỏi state, không gọi API)
   const handleRemoveFavorite = (courseId) => {
-    const updatedFavorites = favoriteCourses.filter(course => course.id !== courseId);
-    setFavoriteCourses(updatedFavorites);
-    localStorage.setItem('favoriteCourses', JSON.stringify(updatedFavorites));
+    setFavoriteCourses(favoriteCourses.filter(course => course.id !== courseId));
   };
 
   if (loading) {
@@ -68,8 +82,8 @@ const Favorites = () => {
               <div key={course.id} className="bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
                 <div className="relative">
                   <img 
-                    src={course.image} 
-                    alt={course.title} 
+                    src={course.imageUrl} 
+                    alt={course.name} 
                     className="w-full h-48 object-cover cursor-pointer"
                     onClick={() => navigate(`/courses/${course.id}`)}
                   />
@@ -103,11 +117,11 @@ const Favorites = () => {
                     className="font-bold text-lg mb-2 cursor-pointer hover:text-blue-700"
                     onClick={() => navigate(`/courses/${course.id}`)}
                   >
-                    {course.title}
+                    {course.name}
                   </h3>
                   <div className="flex items-center text-sm text-gray-500 mb-2">
-                    <span className="text-yellow-500 font-semibold mr-1">★ {course.rating}</span>
-                    <span className="ml-2">{course.students} học viên</span>
+                    <span className="text-yellow-500 font-semibold mr-1">★ {course.averageRating}</span>
+                    <span className="ml-2">{course.enrollmentCount} học viên</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-lg text-purple-700">
