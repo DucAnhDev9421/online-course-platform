@@ -101,6 +101,8 @@ function TeachingPage() {
             description: course.description,
             image: course.imageUrl || 'https://placehold.co/80x80/8b5cf6/fff?text=Course',
             videoDemoUrl: course.videoDemoUrl || '',
+            averageRating: course.averageRating || 0,
+            enrollmentCount: course.enrollmentCount || 0,
           }));
           setCourses(formattedCourses);
         }
@@ -195,6 +197,8 @@ function TeachingPage() {
             description: course.description,
             image: course.imageUrl || 'https://placehold.co/80x80/8b5cf6/fff?text=Course',
             videoDemoUrl: course.videoDemoUrl || '',
+            averageRating: course.averageRating || 0,
+            enrollmentCount: course.enrollmentCount || 0,
           }));
           setCourses(formattedCourses);
         }
@@ -741,15 +745,15 @@ function TeachingPage() {
                             </td>
                             <td className="px-6 py-4 text-center font-semibold text-gray-700">{course.students?.toLocaleString('vi-VN') || '0'}</td>
                             <td className="px-6 py-4 text-center">
-                              <span className="font-bold text-yellow-500">4.5</span>
+                              <span className="font-bold text-yellow-500">{course.averageRating?.toFixed(1) || '0.0'}</span>
                               <i className="fas fa-star text-yellow-400 ml-1"></i>
-                              <span className="text-xs text-gray-500 ml-1">(3,250)</span>
+                              <span className="text-xs text-gray-500 ml-1">({course.enrollmentCount?.toLocaleString('vi-VN') || '0'})</span>
                             </td>
                             <td className="px-6 py-4 text-center">
                               {course.status === 1 ? (
-                                <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">Đang hoạt động</span>
+                                <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">{course.statusText}</span>
                               ) : (
-                                <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">Bản nháp</span>
+                                <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">{course.statusText}</span>
                               )}
                             </td>
                             <td className="px-6 py-4 text-right relative">

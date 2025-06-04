@@ -39,17 +39,62 @@ const VideoPlayerPage = () => {
       setLoading(true);
       try {
         const response = await axios.get(`https://localhost:7261/api/courses/${courseId}`);
+        console.log('API Response:', response.data); // Debug API response
         const courseSections = response.data.sections.map(section => ({
           id: section.id,
           title: section.title,
-          lessons: section.lessons.map(lesson => ({
-            id: lesson.id,
-            title: lesson.title,
-            type: lesson.type,
-            content: lesson.content,
-            duration: lesson.duration,
-            completed: false,
-          }))
+          lessons: section.lessons.map(lesson => {
+            console.log('Lesson data:', lesson); // Debug each lesson
+            let rawVideoUrl = lesson.content || lesson.videoUrl;
+            let processedVideoUrl = rawVideoUrl; // Default to raw URL
+
+            // --- START: Improved logic to handle various YouTube URL formats ---
+            if (rawVideoUrl) {
+                try {
+                    const url = new URL(rawVideoUrl);
+                    let videoId = null;
+
+                    // Check for standard watch?v= format
+                    if (url.hostname.includes('youtube.com')) {
+                        videoId = url.searchParams.get('v');
+                    }
+                    // Check for youtu.be short link format
+                    else if (url.hostname.includes('youtu.be')) {
+                        // The video ID is the first path segment after youtu.be/
+                        const pathSegments = url.pathname.split('/').filter(segment => segment !== '');
+                        if (pathSegments.length > 0) {
+                            videoId = pathSegments[0];
+                        }
+                    }
+
+                    // If a video ID is found, construct the standard YouTube watch URL
+                    if (videoId) {
+                        processedVideoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+                    }
+                     // Note: Embed URLs (e.g., https://www.youtube.com/embed/VIDEO_ID)
+                     // should work correctly with ReactPlayer without modification.
+                     // If it's a non-YouTube URL or we couldn't find a video ID,
+                     // processedVideoUrl remains the rawUrl, which ReactPlayer might still handle
+                     // if it's a direct video file URL (.mp4, etc.) or another supported platform.
+
+                } catch (e) {
+                    console.error("Failed to parse video URL:", rawVideoUrl, e);
+                    // If URL parsing fails, stick with the raw URL as a fallback
+                    processedVideoUrl = rawVideoUrl;
+                }
+            }
+            // --- END: Improved logic ---
+
+            console.log('Processed Video URL:', processedVideoUrl); // Debug processed URL
+            return {
+              id: lesson.id,
+              title: lesson.title,
+              type: lesson.type,
+              content: processedVideoUrl, // Use the processed video URL here
+              duration: lesson.duration,
+              completed: false,
+            };
+          })
         }));
 
         setSections(courseSections);
@@ -57,11 +102,11 @@ const VideoPlayerPage = () => {
 
         // Find and set current lesson
         if (lessonId) {
-          // Check if the lessonId exists in the current course
           let lessonFound = false;
           for (const section of courseSections) {
             const lesson = section.lessons.find(l => l.id === parseInt(lessonId));
             if (lesson) {
+              console.log('Current lesson found:', lesson); // Debug current lesson
               setCurrentLesson(lesson);
               lessonFound = true;
               break;
@@ -529,19 +574,26 @@ const VideoPlayerPage = () => {
         <div className="flex-1 flex flex-col">
           {/* Video Player */}
           <div className="w-full px-0">
-            <ReactPlayer
-              url={currentLesson.content}
-              controls
-              width="100%"
-              style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
-              config={{
-                file: {
-                  attributes: {
-                    poster: 'https://via.placeholder.com/1280x720',
+            {console.log('Rendering video with URL:', currentLesson.content)} {/* Debug video URL */}
+            {currentLesson.content ? (
+              <ReactPlayer
+                url={currentLesson.content}
+                controls
+                width="100%"
+                style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+                config={{
+                  file: {
+                    attributes: {
+                      poster: 'https://via.placeholder.com/1280x720',
+                    }
                   }
-                }
-              }}
-            />
+                }}
+              />
+            ) : (
+              <div className="bg-gray-100 aspect-video flex items-center justify-center">
+                <p className="text-gray-500">Không có video cho bài học này</p>
+              </div>
+            )}
             <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mt-4">
               <button
                 onClick={handlePreviousLesson}

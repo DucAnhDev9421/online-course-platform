@@ -40,6 +40,37 @@ const CourseDetail = () => {
   const [couponError, setCouponError] = useState(null);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
+  // Helper function to format duration from HH:MM:SS to decimal hours
+  const formatDurationToHours = (durationString) => {
+    if (!durationString || typeof durationString !== 'string') {
+      return '0'; // Default to 0 if duration is not available or invalid
+    }
+    const parts = durationString.split(':');
+    if (parts.length !== 3) {
+      return '0'; // Handle unexpected format
+    }
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    const seconds = parseInt(parts[2], 10);
+
+    if (isNaN(hours) || isNaN(minutes) || isNaN(seconds)) {
+      return '0'; // Handle parsing errors
+    }
+
+    const totalHours = hours + (minutes / 60) + (seconds / 3600);
+
+    // Format to one decimal place, or integer if it's a whole number
+    if (totalHours === Math.floor(totalHours)) {
+        return `${totalHours.toFixed(0)}`;
+    }
+     return `${totalHours.toFixed(1)}`;
+  };
+
+  // New state for instructor details
+  const [instructorDetails, setInstructorDetails] = useState(null);
+  const [loadingInstructor, setLoadingInstructor] = useState(true);
+  const [errorInstructor, setErrorInstructor] = useState(null);
+
   // Tính tổng thời lượng
   const formatTotalDuration = (minutes) => {
     if (minutes === 0) return '0 phút';
@@ -49,399 +80,6 @@ const CourseDetail = () => {
     if (hours > 0) return `${hours} giờ`;
     return `${remainingMinutes} phút`;
   };
-
-  // Dữ liệu mẫu cho khóa học (trong thực tế, bạn sẽ fetch từ API)
-  const coursesData = [
-    {
-      id: 1,
-      title: 'React Fundamentals',
-      category: 'Frontend',
-      price: 49.99,
-      rating: 4.5,
-      students: 1200,
-      image: '/api/placeholder/600/400',
-      instructor: 'John Doe',
-      description: 'Khóa học này sẽ dạy bạn tất cả những kiến thức cơ bản về React, hooks, state management và xử lý API.',
-      topics: [
-        'Giới thiệu về JSX và Components',
-        'Hiểu về Props và State',
-        'React Hooks (useState, useEffect, useContext)',
-        'Xử lý Forms trong React',
-        'Routing với React Router',
-        'State Management với Context API và Redux',
-        'Tối ưu hiệu suất React'
-      ],
-      duration: '12 giờ',
-      level: 'Trung cấp',
-      lastUpdated: '2025-02-15',
-      lessons: [
-        { 
-          id: 1, 
-          title: 'Giới thiệu về React', 
-          duration: '15:30', 
-          completed: true,
-          description: 'Trong bài học này, bạn sẽ được tìm hiểu về React là gì, tại sao nên sử dụng React và cách React hoạt động. Chúng ta sẽ đi qua các khái niệm cơ bản như Virtual DOM, JSX và Components.',
-          resources: [
-            { title: 'Slide bài giảng', url: 'https://example.com/react-intro-slides.pdf' },
-            { title: 'Tài liệu tham khảo', url: 'https://example.com/react-docs.pdf' }
-          ],
-          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-        },
-        { 
-          id: 2, 
-          title: 'Cài đặt môi trường', 
-          duration: '20:15', 
-          completed: true,
-          description: 'Hướng dẫn chi tiết cách cài đặt Node.js, npm và các công cụ cần thiết để bắt đầu phát triển ứng dụng React. Bạn sẽ học cách tạo dự án React mới bằng Create React App và cấu trúc thư mục của một dự án React.',
-          resources: [
-            { title: 'Hướng dẫn cài đặt', url: 'https://example.com/setup-guide.pdf' },
-            { title: 'Cấu trúc dự án', url: 'https://example.com/project-structure.pdf' }
-          ],
-          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-        },
-        { 
-          id: 3, 
-          title: 'Components và Props', 
-          duration: '25:45', 
-          completed: false,
-          description: 'Tìm hiểu sâu về Components trong React, cách tạo và sử dụng Functional Components, Class Components. Học cách truyền dữ liệu giữa các components thông qua Props và cách xử lý Props validation.',
-          resources: [
-            { title: 'Components Guide', url: 'https://example.com/components-guide.pdf' },
-            { title: 'Props Examples', url: 'https://example.com/props-examples.pdf' }
-          ],
-          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-        },
-        { 
-          id: 4, 
-          title: 'State và Lifecycle', 
-          duration: '18:20', 
-          completed: false,
-          description: 'Khám phá cách quản lý state trong React components, sự khác biệt giữa state và props. Tìm hiểu về lifecycle methods trong Class Components và cách sử dụng useEffect hook trong Functional Components.',
-          resources: [
-            { title: 'State Management', url: 'https://example.com/state-management.pdf' },
-            { title: 'Lifecycle Methods', url: 'https://example.com/lifecycle-methods.pdf' }
-          ],
-          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-        }
-      ]
-    },
-    {
-      id: 2,
-      title: 'Node.js Advanced',
-      category: 'Backend',
-      price: 59.99,
-      rating: 4.7,
-      students: 850,
-      image: '/api/placeholder/600/400',
-      instructor: 'Jane Smith',
-      description: 'Học các kỹ thuật nâng cao trong Node.js để xây dựng API mạnh mẽ và hệ thống backend có khả năng mở rộng.',
-      topics: [
-        'Kiến trúc ứng dụng Node.js',
-        'Express.js nâng cao',
-        'Authentication và Authorization',
-        'RESTful API design',
-        'Xử lý lỗi và logging',
-        'Streaming và xử lý file',
-        'Tối ưu hiệu suất và scaling'
-      ],
-      duration: '15 giờ',
-      level: 'Nâng cao',
-      lastUpdated: '2025-01-20',
-      lessons: [
-        { 
-          id: 1, 
-          title: 'Giới thiệu Node.js nâng cao', 
-          duration: '20:00', 
-          completed: false,
-          description: 'Tổng quan về Node.js và các khái niệm nâng cao. Tìm hiểu về Event Loop, Asynchronous Programming, và cách Node.js xử lý các tác vụ đồng thời.',
-          resources: [
-            { title: 'Node.js Architecture', url: 'https://example.com/node-architecture.pdf' },
-            { title: 'Event Loop Guide', url: 'https://example.com/event-loop.pdf' }
-          ],
-          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-        },
-        { 
-          id: 2, 
-          title: 'Express.js và Middleware', 
-          duration: '25:30', 
-          completed: false,
-          description: 'Khám phá sâu về Express.js framework, cách tạo và sử dụng middleware, routing, và xử lý request/response. Học cách tối ưu hóa hiệu suất của ứng dụng Express.',
-          resources: [
-            { title: 'Express.js Guide', url: 'https://example.com/express-guide.pdf' },
-            { title: 'Middleware Patterns', url: 'https://example.com/middleware-patterns.pdf' }
-          ],
-          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-        },
-        { 
-          id: 3, 
-          title: 'Authentication với JWT', 
-          duration: '30:15', 
-          completed: false,
-          description: 'Học cách triển khai hệ thống xác thực và phân quyền sử dụng JWT (JSON Web Tokens). Tìm hiểu về các best practices trong bảo mật và cách bảo vệ API của bạn.',
-          resources: [
-            { title: 'JWT Implementation', url: 'https://example.com/jwt-implementation.pdf' },
-            { title: 'Security Best Practices', url: 'https://example.com/security-practices.pdf' }
-          ],
-          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-        },
-        { 
-          id: 4, 
-          title: 'RESTful API Design', 
-          duration: '22:45', 
-          completed: false,
-          description: 'Học cách thiết kế và triển khai RESTful API theo các tiêu chuẩn quốc tế. Tìm hiểu về versioning, documentation, và cách tối ưu hóa API cho hiệu suất tốt nhất.',
-          resources: [
-            { title: 'RESTful Design', url: 'https://example.com/restful-design.pdf' },
-            { title: 'API Documentation', url: 'https://example.com/api-docs.pdf' }
-          ],
-          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-        }
-      ]
-    },
-    {
-      id: 3,
-      title: 'UI/UX Design',
-      category: 'Design',
-      price: 39.99,
-      rating: 4.3,
-      students: 1500,
-      image: '/api/placeholder/600/400',
-      instructor: 'Alex Johnson',
-      description: 'Học cách thiết kế giao diện người dùng đẹp mắt và trải nghiệm người dùng trực quan.',
-      topics: [
-        'Nguyên tắc thiết kế UI/UX',
-        'Nghiên cứu người dùng',
-        'Wireframing và Prototyping',
-        'Thiết kế tương tác',
-        'Thiết kế responsive',
-        'Kiểm thử người dùng',
-        'Figma và công cụ thiết kế'
-      ],
-      duration: '10 giờ',
-      level: 'Cơ bản',
-      lastUpdated: '2025-03-05',
-      lessons: [
-        { 
-          id: 1, 
-          title: 'Nguyên tắc thiết kế cơ bản', 
-          duration: '18:20', 
-          completed: false,
-          description: 'Tìm hiểu về các nguyên tắc cơ bản trong thiết kế UI/UX như hierarchy, contrast, balance, và consistency. Học cách áp dụng các nguyên tắc này vào thiết kế của bạn.',
-          resources: [
-            { title: 'Design Principles', url: 'https://example.com/design-principles.pdf' },
-            { title: 'Visual Hierarchy', url: 'https://example.com/visual-hierarchy.pdf' }
-          ],
-          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-        },
-        { 
-          id: 2, 
-          title: 'Nghiên cứu người dùng', 
-          duration: '22:10', 
-          completed: false,
-          description: 'Học cách tiến hành nghiên cứu người dùng hiệu quả, phân tích dữ liệu, và sử dụng insights để cải thiện thiết kế. Tìm hiểu về các phương pháp nghiên cứu khác nhau và khi nào nên sử dụng chúng.',
-          resources: [
-            { title: 'User Research Methods', url: 'https://example.com/research-methods.pdf' },
-            { title: 'Data Analysis', url: 'https://example.com/data-analysis.pdf' }
-          ],
-          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-        },
-        { 
-          id: 3, 
-          title: 'Wireframing với Figma', 
-          duration: '25:40', 
-          completed: false,
-          description: 'Học cách sử dụng Figma để tạo wireframes và prototypes. Tìm hiểu về các tính năng nâng cao của Figma như components, styles, và animations.',
-          resources: [
-            { title: 'Figma Tutorial', url: 'https://example.com/figma-tutorial.pdf' },
-            { title: 'Wireframing Guide', url: 'https://example.com/wireframing-guide.pdf' }
-          ],
-          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-        },
-        { 
-          id: 4, 
-          title: 'Prototyping và Testing', 
-          duration: '20:30', 
-          completed: false,
-          description: 'Học cách tạo prototypes tương tác và tiến hành kiểm thử người dùng. Tìm hiểu về các phương pháp kiểm thử khác nhau và cách thu thập phản hồi hiệu quả.',
-          resources: [
-            { title: 'Prototyping Guide', url: 'https://example.com/prototyping-guide.pdf' },
-            { title: 'User Testing', url: 'https://example.com/user-testing.pdf' }
-          ],
-          videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ'
-        }
-      ]
-    },
-    {
-      id: 4,
-      title: 'Python for Beginners',
-      category: 'Programming',
-      price: 29.99,
-      rating: 4.8,
-      students: 2000,
-      image: '/api/placeholder/600/400',
-      instructor: 'Maria Garcia',
-      description: 'Khóa học Python từ cơ bản đến nâng cao dành cho người mới bắt đầu lập trình.',
-      topics: [
-        'Cú pháp Python cơ bản',
-        'Cấu trúc dữ liệu và thuật toán',
-        'Object-Oriented Programming',
-        'Xử lý file và exceptions',
-        'Thư viện Python phổ biến',
-        'Automation với Python',
-        'Dự án thực tế'
-      ],
-      duration: '18 giờ',
-      level: 'Cơ bản',
-      lastUpdated: '2025-01-10',
-      lessons: [
-        { id: 1, title: 'Cài đặt Python và IDE', duration: '15:00', completed: false },
-        { id: 2, title: 'Cú pháp cơ bản Python', duration: '30:00', completed: false },
-        { id: 3, title: 'Cấu trúc dữ liệu', duration: '25:00', completed: false },
-        { id: 4, title: 'OOP trong Python', duration: '35:00', completed: false }
-      ]
-    },
-    {
-      id: 5,
-      title: 'DevOps Essentials',
-      category: 'DevOps',
-      price: 69.99,
-      rating: 4.6,
-      students: 700,
-      image: '/api/placeholder/600/400',
-      instructor: 'Robert Chen',
-      description: 'Học các nguyên tắc và công cụ DevOps cần thiết để tối ưu hóa quy trình phát triển phần mềm.',
-      topics: [
-        'CI/CD Pipelines',
-        'Docker và Containerization',
-        'Kubernetes',
-        'Infrastructure as Code',
-        'Monitoring và Logging',
-        'Cloud Platforms (AWS, Azure, GCP)',
-        'Security trong DevOps'
-      ],
-      duration: '20 giờ',
-      level: 'Nâng cao',
-      lastUpdated: '2025-02-28',
-      lessons: [
-        { id: 1, title: 'Giới thiệu về DevOps', duration: '20:00', completed: false },
-        { id: 2, title: 'Docker cơ bản', duration: '25:00', completed: false },
-        { id: 3, title: 'Kubernetes cơ bản', duration: '30:00', completed: false },
-        { id: 4, title: 'CI/CD với GitHub Actions', duration: '25:00', completed: false }
-      ]
-    },
-    {
-      id: 6,
-      title: 'Mobile App Development',
-      category: 'Mobile',
-      price: 54.99,
-      rating: 4.4,
-      students: 950,
-      image: '/api/placeholder/600/400',
-      instructor: 'Lisa Wang',
-      description: 'Phát triển ứng dụng di động đa nền tảng với React Native, từ cơ bản đến triển khai.',
-      topics: [
-        'React Native fundamentals',
-        'State Management trong React Native',
-        'Navigation và Routing',
-        'Styling và UI Components',
-        'Tích hợp Native Modules',
-        'Animation và Gestures',
-        'Publishing ứng dụng lên App Store và Google Play'
-      ],
-      duration: '16 giờ',
-      level: 'Trung cấp',
-      lastUpdated: '2025-03-12',
-      lessons: [
-        { id: 1, title: 'Giới thiệu React Native', duration: '20:00', completed: false },
-        { id: 2, title: 'Cài đặt môi trường', duration: '15:00', completed: false },
-        { id: 3, title: 'Components và Styling', duration: '25:00', completed: false },
-        { id: 4, title: 'Navigation và State', duration: '30:00', completed: false }
-      ]
-    }
-  ];
-
-  // Dữ liệu mẫu cho đánh giá
-  const sampleReviews = [
-    {
-      id: 1,
-      user: 'Nguyễn Văn A',
-      rating: 5,
-      comment: 'Khóa học rất hay và bổ ích. Giảng viên giải thích rất dễ hiểu.',
-      date: '2024-02-15'
-    },
-    {
-      id: 2,
-      user: 'Trần Thị B',
-      rating: 4,
-      comment: 'Nội dung tốt nhưng có một số phần hơi khó hiểu.',
-      date: '2024-02-10'
-    }
-  ];
-
-  // Dữ liệu mẫu cho nội dung khóa học dạng section
-  const sampleSections = [
-    {
-      title: 'Introduction',
-      lectures: 3,
-      duration: 7,
-      expanded: false,
-    },
-    {
-      title: 'Cài đặt môi trường lập trình Python',
-      lectures: 5,
-      duration: 31,
-      expanded: false,
-    },
-    {
-      title: 'Biến và Kiểu dữ liệu (Variables and Data types)',
-      lectures: 2,
-      duration: 11,
-      expanded: false,
-    },
-    {
-      title: 'Các phép toán số học (Arithmetic operators)',
-      lectures: 3,
-      duration: 13,
-      expanded: false,
-    },
-    {
-      title: 'Chuỗi (string) trong Python',
-      lectures: 5,
-      duration: 21,
-      expanded: false,
-    },
-    {
-      title: 'Các phép toán so sánh và logic (comparison and logical operators)',
-      lectures: 3,
-      duration: 12,
-      expanded: false,
-    },
-    {
-      title: 'Kiểu dữ liệu List - Danh Sách',
-      lectures: 6,
-      duration: 30,
-      expanded: false,
-    },
-    {
-      title: 'Kiểu dữ liệu Tuple',
-      lectures: 3,
-      duration: 17,
-      expanded: false,
-    },
-    {
-      title: 'Kiểu dữ liệu Dictionary - Từ điển',
-      lectures: 2,
-      duration: 11,
-      expanded: false,
-    },
-    {
-      title: 'Kiểu dữ liệu Set - Tập hợp',
-      lectures: 2,
-      duration: 11,
-      expanded: false,
-    },
-    // ... có thể thêm nhiều phần nữa để test ...
-  ];
 
   useEffect(() => {
     const fetchCourseDetail = async () => {
@@ -457,8 +95,9 @@ const CourseDetail = () => {
           title: response.data.name,
           price: response.data.price || 0,
           description: response.data.description,
-          rating: 4.5,
-          students: 1200,
+          rating: response.data.averageRating || 0,
+          totalRatings: response.data.totalRatings || 0,
+          students: response.data.enrollmentCount || 0,
           image: response.data.imageUrl || 'https://almablog-media.s3.ap-south-1.amazonaws.com/medium_React_Fundamentals_56e32fd939.png',
           instructor: response.data.instructor,
           topics: response.data.topics || [],
@@ -466,11 +105,12 @@ const CourseDetail = () => {
           level: response.data.levelText || '',
           lastUpdated: new Date().toISOString(),
           lessons: [],
-          videoDemoUrl: response.data.videoDemoUrl || 'https://www.youtube.com/embed/dQw4w9WgXcQ'
+          videoDemoUrl: response.data.videoDemoUrl || ''
         };
         setCourse(courseData);
-        setReviews([]);
         setSections(apiSections);
+        console.log('Course data fetched:', courseData);
+        console.log('Total Duration from API:', courseData.totalDuration);
         // Lấy khóa học liên quan
         try {
           const relatedRes = await axios.get(`https://localhost:7261/api/courses/${courseId}/related`);
@@ -487,6 +127,31 @@ const CourseDetail = () => {
     };
     fetchCourseDetail();
   }, [courseId]);
+
+  // useEffect to fetch instructor details
+  useEffect(() => {
+    const fetchInstructorDetails = async () => {
+      if (course?.instructor?.id) {
+        try {
+          setLoadingInstructor(true);
+          const response = await axios.get(`https://localhost:7261/api/users/instructor/${course.instructor.id}`);
+          setInstructorDetails(response.data);
+        } catch (err) {
+          setErrorInstructor('Không thể tải thông tin giảng viên');
+          console.error('Error fetching instructor details:', err);
+          setInstructorDetails(null); // Set to null on error
+        } finally {
+          setLoadingInstructor(false);
+        }
+      } else {
+         // If no instructor ID in course data, stop loading and set to null
+         setLoadingInstructor(false);
+         setInstructorDetails(null);
+         setErrorInstructor(null);
+      }
+    };
+    fetchInstructorDetails();
+  }, [course]); // Dependency on course state
 
   // Đồng bộ trạng thái yêu thích với server khi load trang hoặc khi course thay đổi
   useEffect(() => {
@@ -780,7 +445,6 @@ const CourseDetail = () => {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
             {course.rating}
           </span>
-          <span className="text-blue-400 underline cursor-pointer text-sm">(637 xếp hạng)</span>
           <span className="text-gray-300 text-sm ml-2">{course.students.toLocaleString()} học viên</span>
         </div>
         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-300 mb-2">
@@ -867,32 +531,41 @@ const CourseDetail = () => {
           {/* Giảng viên */}
           <div className="bg-white rounded-lg shadow p-8 mb-8">
             <h2 className="text-2xl font-bold mb-4">Giảng viên</h2>
-            <div className="flex items-center mb-4">
-              <img src={course?.instructor?.imageUrl || 'https://ui-avatars.com/api/?name=GV&background=random'} alt={course?.instructor?.username || 'Giảng viên'} className="w-24 h-24 rounded-full object-cover border-4 border-purple-200 mr-6" />
-              <div>
-                <a href="#" className="text-xl font-bold text-purple-700 hover:underline">{course?.instructor?.username || 'Giảng viên'}</a>
-                <div className="text-gray-500 text-base mb-2">Senior AI Engineer</div>
-                <div className="flex flex-wrap items-center gap-4 text-gray-600 text-sm">
-                  <span className="flex items-center"><i className="fas fa-star text-yellow-500 mr-1"></i>4,8 xếp hạng giảng viên</span>
-                  <span className="flex items-center"><i className="fas fa-user-check mr-1"></i>637 đánh giá</span>
-                  <span className="flex items-center"><i className="fas fa-users mr-1"></i>8755 học viên</span>
-                  <span className="flex items-center"><i className="fas fa-book mr-1"></i>1 khóa học</span>
+            {loadingInstructor ? (
+              <div>Đang tải thông tin giảng viên...</div>
+            ) : errorInstructor ? (
+              <div className="text-red-500">{errorInstructor}</div>
+            ) : instructorDetails ? (
+              <div className="flex items-center mb-4">
+                <img src={instructorDetails.imageUrl || 'https://ui-avatars.com/api/?name=GV&background=random'} alt={instructorDetails.username || 'Giảng viên'} className="w-24 h-24 rounded-full object-cover border-4 border-purple-200 mr-6" />
+                <div>
+                  <a href="#" className="text-xl font-bold text-purple-700 hover:underline">{instructorDetails.username || 'Giảng viên'}</a>
+                  <div className="text-gray-500 text-base mb-2">{instructorDetails.jobTitle || 'Senior AI Engineer'}</div>
+                  <div className="flex flex-wrap items-center gap-4 text-gray-600 text-sm">
+                    <span className="flex items-center"><i className="fas fa-users mr-1"></i>{instructorDetails.statistics?.totalStudents || 0} học viên</span>
+                    <span className="flex items-center"><i className="fas fa-book mr-1"></i>{instructorDetails.statistics?.totalCourses || 0} khóa học</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+               <div className="text-gray-500">Không có thông tin giảng viên.</div>
+            )}
             {/* Mô tả giảng viên có thể ẩn/hiện */}
             {(() => {
-              const desc = [
+              const desc = instructorDetails?.bio ? [<span key="bio">{instructorDetails.bio}</span>] : [
                 <span key="1" className="font-bold">Mình từng học Kỹ sư tài năng tại Đại Học Bách khoa Hà Nội trong 2 năm. Sau đó mình đi du học và tốt nghiệp thạc sĩ vật lý hạt nhân tại trường đại học MEPhI - một trong những ngôi trường tốt nhất tại liên bang Nga.</span>,
                 <> Sau đó, mình có cơ hội làm việc trong lĩnh vực công nghệ thông tin, bén duyên với lĩnh vực này và hiện tại <span className="font-bold text-purple-700">mình đang là Senior AI Engineer</span> ❤️❤️❤️</>,
                 <><br/><br/>Mình đã có nhiều năm kinh nghiệm làm việc với <span className="font-bold">Python và trí tuệ nhân tạo (AI)</span>. Các lĩnh vực chuyên môn chính của mình bao gồm: thị giác máy tính (<span className="font-bold">Computer Vision</span>), xử lý ngôn ngữ tự nhiên (<span className="font-bold">NLP</span>), truy xuất thông tin RAG, <span className="font-bold">AI Agents</span>, triển khai mô hình AI lên các nền tảng đám mây hoặc thiết bị biên, tối ưu hóa hiệu suất của các mô hình AI, <span className="font-bold">workflow automation với AI</span>.</>,
                 <><br/><br/>Mình rất vui khi được gặp gỡ và chia sẻ kiến thức cũng như đồng hành cùng với các bạn. Hãy luôn giữ đam mê và nhiệt huyết, thành công sẽ đến với chúng ta!</>
               ];
+
               const maxLines = 4;
+              const shouldShowToggle = instructorDetails?.bio ? instructorDetails.bio.split('\n').length > maxLines : desc.length > maxLines;
+
               return (
                 <div className="text-gray-800 text-base leading-relaxed mt-2">
-                  {showFullInstructorDesc ? desc : desc.slice(0, maxLines)}
-                  {desc.length > maxLines && (
+                  {shouldShowToggle && !showFullInstructorDesc ? desc.slice(0, maxLines) : desc}
+                  {shouldShowToggle && (
                     <button
                       className="block mt-2 text-purple-700 font-semibold hover:underline focus:outline-none"
                       onClick={() => setShowFullInstructorDesc(v => !v)}
@@ -1023,7 +696,8 @@ const CourseDetail = () => {
             <div className="mb-4">
               <div className="font-semibold mb-2">Khóa học này bao gồm:</div>
               <ul className="text-gray-700 text-sm space-y-1">
-                <li>15 giờ video theo yêu cầu</li>
+                {/* Hiển thị tổng thời lượng từ API */}
+                {course.duration && <li>{formatDurationToHours(course.duration)} giờ video theo yêu cầu</li>}
                 <li>8 bài viết</li>
                 <li>3 tài nguyên để tải xuống</li>
                 <li>Truy cập trên thiết bị di động và TV</li>
@@ -1062,73 +736,20 @@ const CourseDetail = () => {
       <div className="bg-white rounded-lg shadow p-8 mb-8">
         <h2 className="text-2xl font-bold mb-6">Khóa học tương tự</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {coursesData
-            .filter(c => c.id !== course.id && (c.category === course.category || c.level === course.level))
-            .slice(0, 3)
-            .map(similarCourse => (
-              <div key={similarCourse.id} className="bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="relative">
-                  <img 
-                    src={similarCourse.image} 
-                    alt={similarCourse.title} 
-                    className="w-full h-48 object-cover cursor-pointer"
-                    onClick={() => navigate(`/courses/${similarCourse.id}`)}
-                  />
-                  {similarCourse.price === 0 && (
-                    <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                      Miễn phí
-                    </span>
-                  )}
-                </div>
-                <div className="p-4">
-                  <h3 
-                    className="font-bold text-lg mb-2 cursor-pointer hover:text-blue-700"
-                    onClick={() => navigate(`/courses/${similarCourse.id}`)}
-                  >
-                    {similarCourse.title}
-                  </h3>
-                  <div className="text-gray-600 text-sm mb-2">{similarCourse.category}</div>
-                  <div className="flex items-center text-sm text-gray-500 mb-2">
-                    <span className="text-yellow-500 font-semibold mr-1">★ {similarCourse.rating}</span>
-                    <span className="ml-2">{similarCourse.students} học viên</span>
-                    <span className="ml-2">• {similarCourse.duration} giờ</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-lg text-purple-700">
-                      {similarCourse.price === 0 ? 'Miễn phí' : similarCourse.price.toLocaleString('vi-VN', {style:'currency', currency:'VND'})}
-                    </span>
-                    <button 
-                      onClick={() => navigate(`/courses/${similarCourse.id}`)}
-                      className="text-blue-600 hover:text-blue-700 font-semibold"
-                    >
-                      Xem chi tiết
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+          {relatedCourses.map((related) => (
+            <CourseCard
+              key={related.id}
+              id={related.id}
+              title={related.title || related.name}
+              instructor={related.instructor}
+              price={related.price}
+              rating={related.rating}
+              students={related.students}
+              image={related.image || related.imageUrl}
+            />
+          ))}
         </div>
       </div>
-      {/* Khóa học liên quan */}
-      {relatedCourses.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-8 mb-8">
-          <h2 className="text-2xl font-bold mb-6">Khóa học liên quan</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {relatedCourses.map((related) => (
-              <CourseCard
-                key={related.id}
-                id={related.id}
-                title={related.title || related.name}
-                instructor={related.instructor}
-                price={related.price}
-                rating={related.rating}
-                students={related.students}
-                image={related.image || related.imageUrl}
-              />
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

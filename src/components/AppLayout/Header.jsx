@@ -23,6 +23,57 @@ export default function Header() {
   const [loadingCart, setLoadingCart] = useState(false);
   const navigate = useNavigate();
 
+  // State to store user role
+  const [userRole, setUserRole] = useState(null);
+  const [loadingRole, setLoadingRole] = useState(true);
+
+  // State for search functionality
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+
+  // Debounce function to limit API calls while typing
+  const debounce = (func, delay) => {
+    let timeoutId;
+    const debounced = (...args) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        func.apply(this, args);
+      }, delay);
+    };
+    debounced.cancel = () => {
+      clearTimeout(timeoutId);
+    };
+    return debounced;
+  };
+
+  // Effect to fetch search suggestions
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (searchQuery.length < 2) { // Minimum 2 characters to start searching
+        setSuggestions([]);
+        return;
+      }
+      try {
+        const response = await axios.get(`https://localhost:7261/api/search/suggestion?q=${encodeURIComponent(searchQuery)}`);
+        setSuggestions(response.data?.suggestions || []);
+        console.log('Search suggestions API response:', response.data);
+        console.log('Suggestions array:', response.data?.suggestions);
+      } catch (error) {
+        console.error('Error fetching suggestions:', error);
+        setSuggestions([]);
+      }
+    };
+
+    const debouncedFetchSuggestions = debounce(fetchSuggestions, 300); // 300ms debounce delay
+
+    debouncedFetchSuggestions();
+
+    // Cleanup function to clear timeout on unmount or dependency change
+    return () => {
+      debouncedFetchSuggestions.cancel();
+    };
+  }, [searchQuery]); // Dependency on searchQuery
+
   // Load danh sách khóa học yêu thích từ localStorage
   useEffect(() => {
     const storedFavorites = JSON.parse(localStorage.getItem('favoriteCourses') || '[]');
@@ -40,6 +91,28 @@ export default function Header() {
     setCartCourses(stored);
   }, []);
 
+  // Fetch user role when signed in
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (!isSignedIn || !user?.id) {
+        setUserRole(null);
+        setLoadingRole(false);
+        return;
+      }
+      setLoadingRole(true);
+      try {
+        const response = await axios.get(`https://localhost:7261/api/users/${user.id}/role`);
+        setUserRole(response.data.role?.toLowerCase()); // Store role in lowercase for case-insensitive comparison
+      } catch (error) {
+        console.error('Error fetching user role:', error);
+        setUserRole(null);
+      } finally {
+        setLoadingRole(false);
+      }
+    };
+    fetchUserRole();
+  }, [user, isSignedIn]); // Dependencies on user and isSignedIn
+
   // Gọi API lấy danh mục khi load header
   useEffect(() => {
     const fetchCategories = async () => {
@@ -55,6 +128,11 @@ export default function Header() {
 
   // Đóng tất cả dropdown khi click bên ngoài
   const handleOutsideClick = (e) => {
+    // Check if the click is inside the search suggestions dropdown
+    if (e.target.closest('.search-suggestions-dropdown')) {
+      return; // Do nothing if click is inside suggestions dropdown
+    }
+    // Check if the click is inside any other dropdown
     if (!e.target.closest('.dropdown')) {
       setShowCategories(false);
       setShowProfileMenu(false);
@@ -142,6 +220,36 @@ export default function Header() {
     }
   };
 
+  // Handle suggestion click
+  const handleSuggestionClick = (suggestion) => {
+    console.log('handleSuggestionClick called with:', suggestion);
+    setSearchQuery(''); // Clear search query
+    setSuggestions([]); // Clear suggestions
+
+    console.log('Suggestion Type:', suggestion.type);
+    console.log('Suggestion ID:', suggestion.id);
+
+    if (suggestion.type === 'course') {
+      const navigatePath = `/courses/${suggestion.id}`;
+      console.log('Navigating to course detail:', navigatePath);
+      navigate(navigatePath);
+    } else if (suggestion.type === 'category') {
+      const navigatePath = `/categories/${suggestion.id}`;
+      console.log('Navigating to category detail:', navigatePath);
+      navigate(navigatePath);
+    }
+  };
+
+  // Handle full search when user submits or clicks search button
+  const handleSearch = () => {
+    if (!searchQuery) return;
+    console.log('Performing search for:', searchQuery);
+    // TODO: Call the /api/search endpoint and navigate to search results page
+    // For now, let's just navigate to a search results page with the query
+    navigate(`/search-results?q=${encodeURIComponent(searchQuery)}`);
+    setSuggestions([]); // Close suggestions dropdown after search
+  };
+
   return (
     <header className="bg-white shadow-lg">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -170,9 +278,38 @@ export default function Header() {
           <input
             type="text"
             placeholder="Tìm kiếm khóa học"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleSearch();
+              }
+            }}
             className="w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
-          <button className="absolute right-0 top-0 h-full px-4 bg-purple-700 text-white rounded-r-full hover:bg-purple-800">
+          {/* Suggestions Dropdown - Initial Structure */}
+          {searchQuery && suggestions.length > 0 && (
+            <div className="absolute top-full left-0 right-0 bg-white rounded-md shadow-lg z-[100] mt-1 border border-gray-200 max-h-60 overflow-y-auto">
+              <div className="search-suggestions-dropdown border border-red-500">
+                <ul>
+                  {suggestions.map((suggestion, index) => (
+                    <li
+                      key={index}
+                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-gray-800 text-sm"
+                      onClick={() => handleSuggestionClick(suggestion)}
+                    >
+                      {console.log('Rendering suggestion:', suggestion)}
+                      {suggestion.name} {suggestion.type === 'course' ? '(Khóa học)' : '(Danh mục)'}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+          <button
+            onClick={handleSearch}
+            className="absolute right-0 top-0 h-full px-4 bg-purple-700 text-white rounded-r-full hover:bg-purple-800"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5"
@@ -383,22 +520,26 @@ export default function Header() {
                       <FaUser className="mr-2 text-gray-500 group-hover:text-purple-700 transition-colors duration-200" />
                       <span className="transition-colors duration-200 group-hover:font-semibold">Hồ sơ của tôi</span>
                     </Link>
-                    <Link
-                      to="/token"
-                      className="block px-4 py-2 text-gray-800 hover:bg-purple-50 hover:text-purple-700 flex items-center transition-colors duration-200 group"
-                      onClick={() => setShowProfileMenu(false)}
-                    >
-                      <FaKey className="mr-2 text-gray-500 group-hover:text-purple-700 transition-colors duration-200" />
-                      <span className="transition-colors duration-200 group-hover:font-semibold">API Token</span>
-                    </Link>
-                    <Link
-                      to="/admin"
-                      className="block px-4 py-2 text-gray-800 hover:bg-purple-50 hover:text-purple-700 flex items-center transition-colors duration-200 group"
-                      onClick={() => setShowProfileMenu(false)}
-                    >
-                      <FaTachometerAlt className="mr-2 text-gray-500 group-hover:text-purple-700 transition-colors duration-200" />
-                      <span className="transition-colors duration-200 group-hover:font-semibold">Dashboard</span>
-                    </Link>
+                    {userRole === 'admin' && (
+                      <>
+                        <Link
+                          to="/token"
+                          className="block px-4 py-2 text-gray-800 hover:bg-purple-50 hover:text-purple-700 flex items-center transition-colors duration-200 group"
+                          onClick={() => setShowProfileMenu(false)}
+                        >
+                          <FaKey className="mr-2 text-gray-500 group-hover:text-purple-700 transition-colors duration-200" />
+                          <span className="transition-colors duration-200 group-hover:font-semibold">API Token</span>
+                        </Link>
+                        <Link
+                          to="/admin"
+                          className="block px-4 py-2 text-gray-800 hover:bg-purple-50 hover:text-purple-700 flex items-center transition-colors duration-200 group"
+                          onClick={() => setShowProfileMenu(false)}
+                        >
+                          <FaTachometerAlt className="mr-2 text-gray-500 group-hover:text-purple-700 transition-colors duration-200" />
+                          <span className="transition-colors duration-200 group-hover:font-semibold">Dashboard</span>
+                        </Link>
+                      </>
+                    )}
                     <button
                       onClick={handleSignOut}
                       className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-purple-50 hover:text-purple-700 flex items-center transition-colors duration-200 group"

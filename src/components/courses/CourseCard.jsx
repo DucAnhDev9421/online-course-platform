@@ -104,7 +104,11 @@ export default function CourseCard({
               </div>
               <div className="text-gray-700 mb-3" dangerouslySetInnerHTML={{ __html: detail?.description || description }} />
               <ul className="list-disc pl-5 mb-2 text-sm text-gray-700">
-                {topics.map((topic, idx) => <li key={idx}>{topic}</li>)}
+                {detail?.topics && Array.isArray(detail.topics) && detail.topics.length > 0 ? (
+                  detail.topics.map((topic, idx) => <li key={idx}>{topic}</li>)
+                ) : (
+                   <li>Không có chủ đề được liệt kê.</li>
+                )}
               </ul>
             </>
           )}
